@@ -872,6 +872,203 @@ p {
     margin-right: var(--space-md);
 }
 
+/* === Export Actions === */
+.export-actions {
+    display: flex;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+}
+
+.btn-export {
+    flex: 1;
+    padding: var(--space-md) var(--space-xl);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    font-weight: 500;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-export-primary {
+    background-color: var(--color-accent);
+    color: var(--color-bg-white);
+}
+
+.btn-export-primary:hover {
+    background-color: var(--color-accent-hover);
+    transform: translateY(-1px);
+}
+
+.btn-export-secondary {
+    background-color: transparent;
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border-medium);
+}
+
+.btn-export-secondary:hover {
+    background-color: var(--color-bg-secondary);
+    border-color: var(--color-text-muted);
+}
+
+/* === Validation Modal === */
+.validation-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.validation-modal.hidden {
+    display: none;
+}
+
+.validation-modal-content {
+    background-color: var(--color-bg-white);
+    padding: var(--space-2xl);
+    border-radius: var(--radius-md);
+    max-width: 500px;
+    width: 90%;
+    border: 1px solid var(--color-border-light);
+}
+
+.validation-modal-content h3 {
+    margin-top: 0;
+    margin-bottom: var(--space-md);
+    font-family: var(--font-serif);
+    color: var(--color-text-primary);
+}
+
+.validation-modal-content p {
+    margin-bottom: var(--space-xl);
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+}
+
+.validation-actions {
+    display: flex;
+    gap: var(--space-md);
+    justify-content: flex-end;
+}
+
+/* === Print Styles === */
+@media print {
+
+    /* Hide all UI elements */
+    .global-nav,
+    .template-toolbar,
+    .template-switcher,
+    .export-actions,
+    .ats-score-module,
+    .improvement-panel,
+    .suggestions-container,
+    .preview-header,
+    .btn-export,
+    .validation-modal {
+        display: none !important;
+    }
+
+    /* Body and Page Setup */
+    body {
+        background-color: #ffffff !important;
+        margin: 0;
+        padding: 0;
+    }
+
+    .preview-page {
+        background-color: #ffffff !important;
+        padding: 0;
+    }
+
+    .preview-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* Resume Document */
+    .resume-document,
+    .resume-print {
+        background-color: #ffffff !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 1cm 1.5cm !important;
+        margin: 0 !important;
+        max-width: 100%;
+        font-size: 11pt !important;
+    }
+
+    /* Typography */
+    .resume-name {
+        color: #000000 !important;
+    }
+
+    .resume-section-title {
+        color: #000000 !important;
+        border-color: #000000 !important;
+    }
+
+    .resume-header {
+        border-color: #000000 !important;
+    }
+
+    /* All text black */
+    * {
+        color: #000000 !important;
+    }
+
+    /* Page Break Discipline */
+    .resume-section {
+        page-break-inside: avoid;
+    }
+
+    .resume-entry {
+        page-break-inside: avoid;
+    }
+
+    .resume-header {
+        page-break-after: avoid;
+    }
+
+    .resume-section-title {
+        page-break-after: avoid;
+    }
+
+    /* Template-specific print adjustments */
+    .template-modern .resume-entry {
+        border-bottom: none !important;
+        padding-bottom: 0.5cm;
+    }
+
+    .template-minimal .resume-document {
+        padding: 1.5cm !important;
+    }
+
+    /* Clean skill tags */
+    .skill-tag {
+        background-color: transparent !important;
+        border: 1px solid #000000 !important;
+        color: #000000 !important;
+    }
+
+    .template-minimal .skill-tag {
+        border: none !important;
+    }
+
+    /* Links */
+    a {
+        color: #000000 !important;
+        text-decoration: none !important;
+    }
+}
+
 /* === Responsive Design === */
 @media (max-width: 1024px) {
     .builder-container {

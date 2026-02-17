@@ -202,9 +202,31 @@
                         <button class="template-tab" data-template="minimal">Minimal</button>
                     </div>
                 </div>
+
+                <!-- Export Actions -->
+                <div class="export-actions">
+                    <button class="btn-export btn-export-primary" id="export-print-btn">
+                        Print / Save as PDF
+                    </button>
+                    <button class="btn-export btn-export-secondary" id="export-copy-btn">
+                        Copy Resume as Text
+                    </button>
+                </div>
                 
                 <div id="full-preview-content" class="resume-document resume-print">
                     <!-- Full preview renders here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Validation Warning Modal -->
+        <div class="validation-modal hidden" id="validation-modal">
+            <div class="validation-modal-content">
+                <h3>Resume May Look Incomplete</h3>
+                <p id="validation-message"></p>
+                <div class="validation-actions">
+                    <button class="btn-secondary" id="validation-cancel-btn">Go Back</button>
+                    <button class="btn-primary" id="validation-continue-btn">Continue Anyway</button>
                 </div>
             </div>
         </div>

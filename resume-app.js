@@ -770,6 +770,9 @@ function renderPreviewPage() {
     // Setup template switcher
     setupTemplateSwitcher();
     
+    // Setup export actions
+    setupExportActions();
+    
     // Render resume in full preview
     const fullPreview = document.getElementById('full-preview-content');
     fullPreview.innerHTML = generateResumeHTML();
@@ -974,6 +977,213 @@ function generateTopImprovements() {
     return improvements;
 }
 
+// ===== EXPORT SYSTEM =====
+function setupExportActions() {
+    const printBtn = document.getElementById('export-print-btn');
+    const copyBtn = document.getElementById('export-copy-btn');
+    
+    if (printBtn) {
+        printBtn.addEventListener('click', () => {
+            if (validateResumeBeforeExport()) {
+                handlePrintExport();
+            }
+        });
+    }
+    
+    if (copyBtn) {
+        copyBtn.addEventListener('click', () => {
+            if (validateResumeBeforeExport()) {
+                handleCopyAsText();
+            }
+        });
+    }
+}
+
+function validateResumeBeforeExport() {
+    const { personalInfo, experience, projects } = APP_STATE.resume;
+    const issues = [];
+    
+    // Check for missing name
+    if (!personalInfo.name || !personalInfo.name.trim()) {
+        issues.push('Your resume is missing a name');
+    }
+    
+    // Check for no experience AND no projects
+    const hasExperience = experience.some(e => e.company || e.role);
+    const hasProjects = projects.some(p => p.name || p.description);
+    
+    if (!hasExperience && !hasProjects) {
+        issues.push('Your resume has no experience or projects listed');
+    }
+    
+    if (issues.length > 0) {
+        showValidationModal(issues);
+        return false; // Block until user confirms
+    }
+    
+    return true; // No issues, proceed
+}
+
+function showValidationModal(issues) {
+    const modal = document.getElementById('validation-modal');
+    const message = document.getElementById('validation-message');
+    const cancelBtn = document.getElementById('validation-cancel-btn');
+    const continueBtn = document.getElementById('validation-continue-btn');
+    
+    if (!modal) return;
+    
+    // Set message
+    message.textContent = issues.join('. ') + '.';
+    
+    // Show modal
+    modal.classList.remove('hidden');
+    
+    // Setup event listeners
+    cancelBtn.onclick = () => {
+        modal.classList.add('hidden');
+    };
+    
+    continueBtn.onclick = () => {
+        modal.classList.add('hidden');
+        // Determine which action was attempted
+        const lastAction = modal.dataset.action;
+        if (lastAction === 'print') {
+            window.print();
+        } else if (lastAction === 'copy') {
+            copyResumeToClipboard();
+        }
+    };
+    
+    // Store action for later
+    modal.dataset.action = event.target.id.includes('print') ? 'print' : 'copy';
+}
+
+function handlePrintExport() {
+    console.log('✓ Print/PDF export initiated');
+    window.print();
+}
+
+function handleCopyAsText() {
+    copyResumeToClipboard();
+}
+
+function copyResumeToClipboard() {
+    const plainText = generatePlainTextResume();
+    
+    navigator.clipboard.writeText(plainText).then(() => {
+        console.log('✓ Resume copied to clipboard');
+        
+        // Visual feedback
+        const copyBtn = document.getElementById('export-copy-btn');
+        if (copyBtn) {
+            const originalText = copyBtn.textContent;
+            copyBtn.textContent = 'Copied!';
+            copyBtn.style.backgroundColor = 'var(--color-accent)';
+            copyBtn.style.color = 'var(--color-bg-white)';
+            
+            setTimeout(() => {
+                copyBtn.textContent = originalText;
+                copyBtn.style.backgroundColor = '';
+                copyBtn.style.color = '';
+            }, 2000);
+        }
+    }).catch(err => {
+        console.error('Failed to copy to clipboard:', err);
+        alert('Failed to copy to clipboard. Please try again.');
+    });
+}
+
+function generatePlainTextResume() {
+    const { personalInfo, summary, education, experience, projects, skills, links } = APP_STATE.resume;
+    
+    let text = '';
+    
+    // Name and Contact
+    if (personalInfo.name) {
+        text += personalInfo.name.toUpperCase() + '\n';
+    }
+    
+    const contactParts = [];
+    if (personalInfo.email) contactParts.push(personalInfo.email);
+    if (personalInfo.phone) contactParts.push(personalInfo.phone);
+    if (personalInfo.location) contactParts.push(personalInfo.location);
+    
+    if (contactParts.length > 0) {
+        text += contactParts.join(' | ') + '\n';
+    }
+    
+    text += '\n';
+    
+    // Summary
+    if (summary) {
+        text += 'SUMMARY\n';
+        text += summary + '\n\n';
+    }
+    
+    // Education
+    if (education.length > 0) {
+        text += 'EDUCATION\n';
+        education.forEach(edu => {
+            if (edu.institution || edu.degree || edu.year) {
+                if (edu.institution) text += edu.institution;
+                if (edu.degree) text += ' — ' + edu.degree;
+                if (edu.year) text += ' (' + edu.year + ')';
+                text += '\n';
+            }
+        });
+        text += '\n';
+    }
+    
+    // Experience
+    if (experience.length > 0) {
+        text += 'EXPERIENCE\n';
+        experience.forEach(exp => {
+            if (exp.role || exp.company) {
+                if (exp.role) text += exp.role;
+                if (exp.company) text += ' — ' + exp.company;
+                if (exp.duration) text += ' (' + exp.duration + ')';
+                text += '\n';
+                if (exp.description) {
+                    text += '  • ' + exp.description + '\n';
+                }
+                text += '\n';
+            }
+        });
+    }
+    
+    // Projects
+    if (projects.length > 0) {
+        text += 'PROJECTS\n';
+        projects.forEach(proj => {
+            if (proj.name) {
+                text += proj.name + '\n';
+                if (proj.description) {
+                    text += '  • ' + proj.description + '\n';
+                }
+                if (proj.techStack) {
+                    text += '  Tech: ' + proj.techStack + '\n';
+                }
+                text += '\n';
+            }
+        });
+    }
+    
+    // Skills
+    if (skills) {
+        text += 'SKILLS\n';
+        text += skills + '\n\n';
+    }
+    
+    // Links
+    if (links.github || links.linkedin) {
+        text += 'LINKS\n';
+        if (links.github) text += 'GitHub: ' + links.github + '\n';
+        if (links.linkedin) text += 'LinkedIn: ' + links.linkedin + '\n';
+    }
+    
+    return text.trim();
+}
+
 // ===== UTILITY FUNCTIONS =====
 function escapeHtml(text) {
     const div = document.createElement('div');
@@ -994,6 +1204,8 @@ function init() {
     console.log(`✓ Template System: ${APP_STATE.template} template loaded`);
     console.log('✓ Bullet Guidance: Action verb & numeric checks enabled');
     console.log('✓ Improvement Panel: Top 3 insights generating');
+    console.log('✓ Export System: Print/PDF & plain-text copy ready');
+    console.log('✓ Validation: Pre-export warnings active');
     if (APP_STATE.resume.personalInfo.name) {
         console.log(`✓ Form data reloaded: ${APP_STATE.resume.personalInfo.name}`);
     }
