@@ -16,7 +16,8 @@ const APP_STATE = {
             github: '',
             linkedin: ''
         }
-    }
+    },
+    template: 'classic' // classic, modern, minimal
 };
 
 // ===== SAMPLE DATA =====
@@ -155,6 +156,9 @@ function renderBuilderPage() {
     // Setup form event listeners
     setupBuilderListeners();
     
+    // Setup template switcher
+    setupTemplateSwitcher();
+    
     // Load existing data into form
     loadFormData();
     
@@ -163,8 +167,14 @@ function renderBuilderPage() {
     renderExperienceList();
     renderProjectsList();
     
+    // Apply current template
+    applyTemplate(APP_STATE.template);
+    
     // Update preview
     updatePreview();
+    
+    // Update improvement panel
+    updateImprovementPanel();
 }
 
 function setupBuilderListeners() {
@@ -395,6 +405,10 @@ function renderExperienceList() {
             APP_STATE.resume.experience[index].description = e.target.value;
             saveState();
             updatePreview();
+            
+            // Add bullet guidance hint
+            const fieldContainer = e.target.closest('.form-field');
+            addBulletHint(fieldContainer, e.target.value);
         });
     });
 }
@@ -459,6 +473,10 @@ function renderProjectsList() {
             APP_STATE.resume.projects[index].description = e.target.value;
             saveState();
             updatePreview();
+            
+            // Add bullet guidance hint
+            const fieldContainer = e.target.closest('.form-field');
+            addBulletHint(fieldContainer, e.target.value);
         });
         
         entryDiv.querySelector('.proj-tech').addEventListener('input', (e) => {
@@ -476,8 +494,14 @@ function updatePreview() {
     
     previewContainer.innerHTML = generateResumeHTML();
     
+    // Apply current template
+    applyTemplate(APP_STATE.template);
+    
     // Update ATS score
     updateATSScore();
+    
+    // Update improvement panel
+    updateImprovementPanel();
 }
 
 // ===== ATS SCORING ENGINE =====
@@ -743,9 +767,15 @@ function renderPreviewPage() {
     const appContent = document.getElementById('app-content');
     appContent.appendChild(clone);
     
+    // Setup template switcher
+    setupTemplateSwitcher();
+    
     // Render resume in full preview
     const fullPreview = document.getElementById('full-preview-content');
     fullPreview.innerHTML = generateResumeHTML();
+    
+    // Apply current template
+    applyTemplate(APP_STATE.template);
 }
 
 // ===== PROOF PAGE =====
@@ -755,6 +785,193 @@ function renderProofPage() {
     
     const appContent = document.getElementById('app-content');
     appContent.appendChild(clone);
+}
+
+// ===== TEMPLATE SYSTEM =====
+function setupTemplateSwitcher() {
+    const templateTabs = document.querySelectorAll('.template-tab');
+    
+    templateTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const templateName = tab.getAttribute('data-template');
+            switchTemplate(templateName);
+        });
+    });
+    
+    // Set active tab based on current template
+    templateTabs.forEach(tab => {
+        if (tab.getAttribute('data-template') === APP_STATE.template) {
+            tab.classList.add('active');
+        } else {
+            tab.classList.remove('active');
+        }
+    });
+}
+
+function switchTemplate(templateName) {
+    // Update state
+    APP_STATE.template = templateName;
+    saveState();
+    
+    // Update active tab
+    document.querySelectorAll('.template-tab').forEach(tab => {
+        if (tab.getAttribute('data-template') === templateName) {
+            tab.classList.add('active');
+        } else {
+            tab.classList.remove('active');
+        }
+    });
+    
+    // Apply template styling (does NOT affect score or content)
+    applyTemplate(templateName);
+    
+    console.log(`✓ Template switched to: ${templateName}`);
+}
+
+function applyTemplate(templateName) {
+    const resumeDocuments = document.querySelectorAll('.resume-document');
+    
+    resumeDocuments.forEach(doc => {
+        // Remove all template classes
+        doc.classList.remove('template-classic', 'template-modern', 'template-minimal');
+        
+        // Add new template class
+        doc.classList.add(`template-${templateName}`);
+    });
+}
+
+// ===== BULLET DISCIPLINE GUIDANCE =====
+const ACTION_VERBS = [
+    'built', 'developed', 'designed', 'implemented', 'led', 'improved', 
+    'created', 'optimized', 'automated', 'managed', 'architected',
+    'launched', 'delivered', 'analyzed', 'established', 'coordinated',
+    'streamlined', 'enhanced', 'reduced', 'increased', 'achieved'
+];
+
+function checkBulletGuidance(text) {
+    const hints = [];
+    
+    // Check for action verb
+    const startsWithActionVerb = ACTION_VERBS.some(verb => 
+        text.toLowerCase().trim().startsWith(verb)
+    );
+    
+    if (!startsWithActionVerb && text.trim().length > 0) {
+        hints.push('Start with a strong action verb.');
+    }
+    
+    // Check for numeric impact
+    const hasNumericImpact = /\d+[%kmb+]?|\d+,\d+|\d+x/i.test(text);
+    
+    if (!hasNumericImpact && text.trim().length > 10) {
+        hints.push('Add measurable impact (numbers).');
+    }
+    
+    return hints;
+}
+
+function addBulletHint(container, text) {
+    // Remove existing hint
+    const existingHint = container.querySelector('.bullet-hint');
+    if (existingHint) {
+        existingHint.remove();
+    }
+    
+    const hints = checkBulletGuidance(text);
+    
+    if (hints.length > 0) {
+        const hintDiv = document.createElement('div');
+        hintDiv.className = 'bullet-hint';
+        hintDiv.textContent = hints[0]; // Show first hint
+        container.appendChild(hintDiv);
+    }
+}
+
+// ===== IMPROVEMENT PANEL =====
+function updateImprovementPanel() {
+    const improvementList = document.getElementById('improvement-list');
+    const improvementPanel = document.getElementById('improvement-panel');
+    
+    if (!improvementList || !improvementPanel) return;
+    
+    const { score, feedback } = calculateATSScore();
+    
+    // Hide panel if score >= 90
+    if (score >= 90) {
+        improvementPanel.classList.add('hidden');
+        return;
+    }
+    
+    improvementPanel.classList.remove('hidden');
+    
+    // Generate top 3 improvements based on scoring gaps
+    const improvements = generateTopImprovements();
+    
+    if (improvements.length === 0) {
+        improvementPanel.classList.add('hidden');
+        return;
+    }
+    
+    let html = '';
+    improvements.slice(0, 3).forEach(improvement => {
+        html += `<div class="improvement-item">${escapeHtml(improvement)}</div>`;
+    });
+    
+    improvementList.innerHTML = html;
+}
+
+function generateTopImprovements() {
+    const { personalInfo, summary, education, experience, projects, skills, links } = APP_STATE.resume;
+    const improvements = [];
+    
+    // Priority order based on impact
+    
+    // Check projects (high impact)
+    const validProjects = projects.filter(p => p.name || p.description).length;
+    if (validProjects < 2) {
+        improvements.push('Add at least one more project.');
+    }
+    
+    // Check metrics in bullets (high impact)
+    const hasMetrics = checkForMetrics([...experience, ...projects]);
+    if (!hasMetrics) {
+        improvements.push('Include measurable impact in experience.');
+    }
+    
+    // Check summary
+    if (summary) {
+        const wordCount = summary.trim().split(/\s+/).filter(w => w).length;
+        if (wordCount < 40) {
+            improvements.push('Expand your summary to strengthen positioning.');
+        }
+    } else {
+        improvements.push('Expand your summary to strengthen positioning.');
+    }
+    
+    // Check skills
+    const skillsArray = skills ? skills.split(',').map(s => s.trim()).filter(s => s) : [];
+    if (skillsArray.length < 8) {
+        improvements.push('Add more role-relevant skills.');
+    }
+    
+    // Check experience
+    const validExperience = experience.filter(e => e.company || e.role).length;
+    if (validExperience === 0) {
+        improvements.push('Include internship or project-based experience.');
+    }
+    
+    // Check links
+    if (!links.github && !links.linkedin) {
+        improvements.push('Add LinkedIn or GitHub profile link.');
+    }
+    
+    // Check education completeness
+    const completeEducation = education.filter(e => e.institution && e.degree && e.year).length;
+    if (education.length > 0 && completeEducation === 0) {
+        improvements.push('Complete all education fields.');
+    }
+    
+    return improvements;
 }
 
 // ===== UTILITY FUNCTIONS =====
@@ -774,6 +991,9 @@ function init() {
     console.log('✓ Auto-save: Enabled on all form changes');
     console.log('✓ Preview: Live rendering active');
     console.log('✓ ATS Scoring: Enabled');
+    console.log(`✓ Template System: ${APP_STATE.template} template loaded`);
+    console.log('✓ Bullet Guidance: Action verb & numeric checks enabled');
+    console.log('✓ Improvement Panel: Top 3 insights generating');
     if (APP_STATE.resume.personalInfo.name) {
         console.log(`✓ Form data reloaded: ${APP_STATE.resume.personalInfo.name}`);
     }

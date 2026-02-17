@@ -137,6 +137,15 @@
 
                 <!-- Right Column: Live Preview -->
                 <div class="builder-preview">
+                    <!-- Template Switcher -->
+                    <div class="template-switcher">
+                        <div class="template-tabs">
+                            <button class="template-tab active" data-template="classic">Classic</button>
+                            <button class="template-tab" data-template="modern">Modern</button>
+                            <button class="template-tab" data-template="minimal">Minimal</button>
+                        </div>
+                    </div>
+
                     <!-- ATS Score Module -->
                     <div class="ats-score-module">
                         <div class="score-header">
@@ -154,6 +163,16 @@
                         </div>
                         <div class="suggestions-container" id="suggestions-container">
                             <!-- Smart suggestions render here -->
+                        </div>
+                    </div>
+
+                    <!-- Improvement Panel -->
+                    <div class="improvement-panel" id="improvement-panel">
+                        <div class="improvement-header">
+                            <h3>Top 3 Improvements</h3>
+                        </div>
+                        <div class="improvement-list" id="improvement-list">
+                            <!-- Top improvements render here -->
                         </div>
                     </div>
 
@@ -175,6 +194,15 @@
     <template id="preview-template">
         <div class="preview-page">
             <div class="preview-container">
+                <!-- Template Switcher Toolbar -->
+                <div class="template-toolbar">
+                    <div class="template-tabs">
+                        <button class="template-tab active" data-template="classic">Classic</button>
+                        <button class="template-tab" data-template="modern">Modern</button>
+                        <button class="template-tab" data-template="minimal">Minimal</button>
+                    </div>
+                </div>
+                
                 <div id="full-preview-content" class="resume-document resume-print">
                     <!-- Full preview renders here -->
                 </div>
