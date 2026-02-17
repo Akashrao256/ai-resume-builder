@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Builder - Build a Resume That Gets Read</title>
+    <meta name="description" content="AI-assisted resume creation for modern hiring systems. Create professional resumes that stand out.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="resume-styles.css">
+</head>
+<body>
+    <!-- Global Navigation -->
+    <nav class="global-nav">
+        <div class="nav-container">
+            <div class="nav-left">
+                <h1 class="nav-logo">AI Resume Builder</h1>
+            </div>
+            <div class="nav-right">
+                <a href="#/builder" class="nav-link">Builder</a>
+                <a href="#/preview" class="nav-link">Preview</a>
+                <a href="#/proof" class="nav-link">Proof</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Route Content Container -->
+    <main id="app-content">
+        <!-- Dynamic content loads here -->
+    </main>
+
+    <!-- Templates -->
+    
+    <!-- Home Page Template -->
+    <template id="home-template">
+        <div class="home-page">
+            <div class="hero-section">
+                <h1 class="hero-title">Build a Resume That Gets Read.</h1>
+                <p class="hero-subtitle">AI-assisted resume creation for modern hiring systems.</p>
+                <button class="btn-primary" id="start-building-btn">Start Building</button>
+            </div>
+        </div>
+    </template>
+
+    <!-- Builder Page Template -->
+    <template id="builder-template">
+        <div class="builder-page">
+            <div class="builder-container">
+                <!-- Left Column: Form -->
+                <div class="builder-form">
+                    <div class="form-header">
+                        <h2>Resume Builder</h2>
+                        <button class="btn-secondary" id="load-sample-btn">Load Sample Data</button>
+                    </div>
+
+                    <!-- Personal Info Section -->
+                    <section class="form-section">
+                        <h3>Personal Information</h3>
+                        <div class="form-grid">
+                            <div class="form-field">
+                                <label for="name">Full Name</label>
+                                <input type="text" id="name" name="name" placeholder="John Doe">
+                            </div>
+                            <div class="form-field">
+                                <label for="email">Email</label>
+                                <input type="email" id="email" name="email" placeholder="john.doe@example.com">
+                            </div>
+                            <div class="form-field">
+                                <label for="phone">Phone</label>
+                                <input type="tel" id="phone" name="phone" placeholder="+1 (555) 123-4567">
+                            </div>
+                            <div class="form-field">
+                                <label for="location">Location</label>
+                                <input type="text" id="location" name="location" placeholder="San Francisco, CA">
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Summary Section -->
+                    <section class="form-section">
+                        <h3>Professional Summary</h3>
+                        <div class="form-field">
+                            <label for="summary">Summary</label>
+                            <textarea id="summary" name="summary" rows="4" placeholder="Brief professional summary highlighting your key strengths and experience..."></textarea>
+                        </div>
+                    </section>
+
+                    <!-- Education Section -->
+                    <section class="form-section">
+                        <h3>Education</h3>
+                        <div id="education-list"></div>
+                        <button class="btn-add" id="add-education-btn">+ Add Education</button>
+                    </section>
+
+                    <!-- Experience Section -->
+                    <section class="form-section">
+                        <h3>Work Experience</h3>
+                        <div id="experience-list"></div>
+                        <button class="btn-add" id="add-experience-btn">+ Add Experience</button>
+                    </section>
+
+                    <!-- Projects Section -->
+                    <section class="form-section">
+                        <h3>Projects</h3>
+                        <div id="projects-list"></div>
+                        <button class="btn-add" id="add-project-btn">+ Add Project</button>
+                    </section>
+
+                    <!-- Skills Section -->
+                    <section class="form-section">
+                        <h3>Skills</h3>
+                        <div class="form-field">
+                            <label for="skills">Skills (comma-separated)</label>
+                            <input type="text" id="skills" name="skills" placeholder="JavaScript, React, Node.js, Python, AWS">
+                        </div>
+                    </section>
+
+                    <!-- Links Section -->
+                    <section class="form-section">
+                        <h3>Links</h3>
+                        <div class="form-grid">
+                            <div class="form-field">
+                                <label for="github">GitHub</label>
+                                <input type="url" id="github" name="github" placeholder="https://github.com/yourusername">
+                            </div>
+                            <div class="form-field">
+                                <label for="linkedin">LinkedIn</label>
+                                <input type="url" id="linkedin" name="linkedin" placeholder="https://linkedin.com/in/yourusername">
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Right Column: Live Preview -->
+                <div class="builder-preview">
+                    <div class="preview-header">
+                        <h3>Live Preview</h3>
+                    </div>
+                    <div class="resume-preview">
+                        <div id="preview-content" class="resume-document">
+                            <!-- Preview renders here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Preview Page Template -->
+    <template id="preview-template">
+        <div class="preview-page">
+            <div class="preview-container">
+                <div id="full-preview-content" class="resume-document resume-print">
+                    <!-- Full preview renders here -->
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Proof Page Template -->
+    <template id="proof-template">
+        <div class="proof-page">
+            <div class="proof-container">
+                <h2>Proof & Submission</h2>
+                <p class="proof-description">Submit your resume builder artifacts and completion proof.</p>
+
+                <section class="proof-section">
+                    <div class="form-field">
+                        <label for="export-link">Resume Export Link (Future)</label>
+                        <input type="url" id="export-link" placeholder="https://..." disabled>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="completion-proof">Builder Completion Proof</label>
+                        <input type="text" id="completion-proof" placeholder="Project completion evidence...">
+                    </div>
+
+                    <div class="form-field">
+                        <label for="proof-notes">Notes</label>
+                        <textarea id="proof-notes" rows="6" placeholder="Additional notes or comments..."></textarea>
+                    </div>
+
+                    <button class="btn-primary" disabled>Submit (Not Implemented)</button>
+                </section>
+            </div>
+        </div>
+    </template>
+
+    <script src="resume-app.js"></script>
+</body>
+</html>
