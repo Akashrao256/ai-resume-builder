@@ -704,153 +704,158 @@ function updatePreview() {
 }
 
 // ===== ATS SCORING ENGINE =====
+// Deterministic rule-based scoring — 11 rules, max 100 points.
+// Score is NEVER stored; always recalculated from APP_STATE.resume.
+
+const ATS_ACTION_VERBS = [
+    'built', 'led', 'designed', 'improved', 'developed',
+    'implemented', 'created', 'optimized', 'managed', 'delivered',
+    'launched', 'reduced', 'increased', 'architected', 'deployed'
+];
+
 function calculateATSScore() {
     const { personalInfo, summary, education, experience, projects, skills, links } = APP_STATE.resume;
-    
-    let score = 0;
-    const feedback = [];
 
-    // Flatten skills for counting
+    let score = 0;
+    const rules = []; // { met, points, suggestion }
+
+    // Flatten skills
     const allSkills = [
         ...(skills.technical || []),
-        ...(skills.soft || []),
-        ...(skills.tools || [])
+        ...(skills.soft     || []),
+        ...(skills.tools    || [])
     ];
-    
-    // Rule 1: Summary length (40-120 words) = +15 points
-    if (summary) {
-        const wordCount = summary.trim().split(/\s+/).filter(w => w).length;
-        if (wordCount >= 40 && wordCount <= 120) {
-            score += 15;
-        } else if (wordCount > 0) {
-            if (wordCount < 40) {
-                feedback.push(`Write a stronger summary (currently ${wordCount} words, target 40-120 words)`);
-            } else {
-                feedback.push(`Shorten your summary (currently ${wordCount} words, target 40-120 words)`);
-            }
-        } else {
-            feedback.push('Write a stronger summary (40-120 words)');
-        }
-    } else {
-        feedback.push('Write a stronger summary (40-120 words)');
-    }
-    
-    // Rule 2: At least 2 projects = +10 points
-    const validProjects = projects.filter(p => p.title || p.description).length;
-    if (validProjects >= 2) {
-        score += 10;
-    } else {
-        feedback.push(`Add at least 2 projects (currently have ${validProjects})`);
-    }
-    
-    // Rule 3: At least 1 experience entry = +10 points
-    const validExperience = experience.filter(e => e.company || e.role).length;
-    if (validExperience >= 1) {
-        score += 10;
-    } else {
-        feedback.push('Add at least 1 work experience entry');
-    }
-    
-    // Rule 4: Skills >= 8 items = +10 points
-    if (allSkills.length >= 8) {
-        score += 10;
-    } else {
-        feedback.push(`Add more skills (currently have ${allSkills.length}, target 8+)`);
-    }
-    
-    // Rule 5: GitHub OR LinkedIn exists = +10 points
-    if (links.github || links.linkedin) {
-        score += 10;
-    } else {
-        feedback.push('Add LinkedIn or GitHub profile');
-    }
-    
-    // Rule 6: Metrics in experience/project bullets = +15 points
-    const hasMetrics = checkForMetrics([...experience, ...projects]);
-    if (hasMetrics) {
-        score += 15;
-    } else {
-        feedback.push('Add measurable impact (numbers, %, metrics) in your bullet points');
-    }
-    
-    // Rule 7: Complete education fields = +10 points
-    const completeEducation = education.filter(e => e.institution && e.degree && e.year).length;
-    if (completeEducation > 0) {
-        score += 10;
-    } else if (education.length > 0) {
-        feedback.push('Complete all education fields (institution, degree, year)');
-    }
-    
-    // Additional: All basic info filled = +10 points (bonus)
-    if (personalInfo.name && personalInfo.email && personalInfo.phone && personalInfo.location) {
-        score += 10;
-    }
-    
+
+    // R1  +10 — Name provided
+    const hasName = !!(personalInfo.name && personalInfo.name.trim());
+    rules.push({ met: hasName, points: 10, suggestion: 'Add your full name (+10 points)' });
+    if (hasName) score += 10;
+
+    // R2  +10 — Email provided
+    const hasEmail = !!(personalInfo.email && personalInfo.email.trim());
+    rules.push({ met: hasEmail, points: 10, suggestion: 'Add your email address (+10 points)' });
+    if (hasEmail) score += 10;
+
+    // R3  +10 — Summary > 50 characters
+    const summaryOk = !!(summary && summary.trim().length > 50);
+    rules.push({ met: summaryOk, points: 10, suggestion: 'Add a professional summary over 50 characters (+10 points)' });
+    if (summaryOk) score += 10;
+
+    // R4  +15 — At least 1 experience entry WITH a description (bullet points)
+    const expWithBullets = experience.filter(e =>
+        (e.company || e.role) && e.description && e.description.trim().length > 0
+    );
+    const hasExpBullets = expWithBullets.length >= 1;
+    rules.push({ met: hasExpBullets, points: 15, suggestion: 'Add at least one experience entry with bullet points (+15 points)' });
+    if (hasExpBullets) score += 15;
+
+    // R5  +10 — At least 1 education entry
+    const hasEducation = education.some(e => e.institution || e.degree);
+    rules.push({ met: hasEducation, points: 10, suggestion: 'Add at least one education entry (+10 points)' });
+    if (hasEducation) score += 10;
+
+    // R6  +10 — At least 5 skills
+    const hasEnoughSkills = allSkills.length >= 5;
+    rules.push({ met: hasEnoughSkills, points: 10, suggestion: `Expand skills to 5+ (currently ${allSkills.length}) (+10 points)` });
+    if (hasEnoughSkills) score += 10;
+
+    // R7  +10 — At least 1 project
+    const validProjects = projects.filter(p => p.title || p.description);
+    const hasProject = validProjects.length >= 1;
+    rules.push({ met: hasProject, points: 10, suggestion: 'Include at least one project (+10 points)' });
+    if (hasProject) score += 10;
+
+    // R8  +5  — Phone provided
+    const hasPhone = !!(personalInfo.phone && personalInfo.phone.trim());
+    rules.push({ met: hasPhone, points: 5, suggestion: 'Add your phone number (+5 points)' });
+    if (hasPhone) score += 5;
+
+    // R9  +5  — LinkedIn provided
+    const hasLinkedIn = !!(links.linkedin && links.linkedin.trim());
+    rules.push({ met: hasLinkedIn, points: 5, suggestion: 'Add LinkedIn profile (+5 points)' });
+    if (hasLinkedIn) score += 5;
+
+    // R10 +5  — GitHub provided
+    const hasGitHub = !!(links.github && links.github.trim());
+    rules.push({ met: hasGitHub, points: 5, suggestion: 'Add GitHub profile (+5 points)' });
+    if (hasGitHub) score += 5;
+
+    // R11 +10 — Summary contains action verbs
+    const summaryLower = (summary || '').toLowerCase();
+    const hasActionVerbs = ATS_ACTION_VERBS.some(v => summaryLower.includes(v));
+    rules.push({ met: hasActionVerbs, points: 10, suggestion: 'Use action verbs in your summary (Built, Led, Designed…) (+10 points)' });
+    if (hasActionVerbs) score += 10;
+
     // Cap at 100
     score = Math.min(score, 100);
-    
-    return { score, feedback };
+
+    // Suggestions = unmet rules, sorted by point value descending, max 5
+    const suggestions = rules
+        .filter(r => !r.met)
+        .sort((a, b) => b.points - a.points)
+        .map(r => r.suggestion);
+
+    return { score, suggestions };
 }
 
 function checkForMetrics(entries) {
-    // Check if any description contains numbers or metrics
     const metricsPattern = /\d+[%kmb+]?|\d+,\d+|\d+x|increased|decreased|reduced|improved/i;
-    
     for (const entry of entries) {
-        const description = entry.description || '';
-        if (metricsPattern.test(description)) {
-            return true;
-        }
+        if (metricsPattern.test(entry.description || '')) return true;
     }
-    
     return false;
 }
 
-function updateATSScore() {
-    const scoreNumberEl = document.getElementById('score-number');
-    const scoreCircleEl = document.getElementById('score-circle');
-    const suggestionsContainer = document.getElementById('suggestions-container');
-    
-    if (!scoreNumberEl || !scoreCircleEl || !suggestionsContainer) return;
-    
-    const { score, feedback } = calculateATSScore();
-    
-    // Update score display
-    scoreNumberEl.textContent = score;
-    
-    // Update circle meter
-    const circumference = 314; // 2 * PI * r (r=50)
-    const offset = circumference - (score / 100) * circumference;
-    scoreCircleEl.style.strokeDashoffset = offset;
-    
-    // Update suggestions
-    renderSuggestions(score, feedback);
+// Score band config — single source of truth for colours + labels
+const ATS_BANDS = [
+    { min: 0,  max: 40,  cls: 'score-band-red',   stroke: '#c0392b', label: 'Needs Work'    },
+    { min: 41, max: 70,  cls: 'score-band-amber',  stroke: '#d4900a', label: 'Getting There' },
+    { min: 71, max: 100, cls: 'score-band-green',  stroke: '#27ae60', label: 'Strong Resume' }
+];
+
+function _getScoreBand(score) {
+    return ATS_BANDS.find(b => score >= b.min && score <= b.max) || ATS_BANDS[0];
 }
 
-function renderSuggestions(score, feedback) {
-    const suggestionsContainer = document.getElementById('suggestions-container');
-    if (!suggestionsContainer) return;
-    
-    // Hide if score >= 90
-    if (score >= 90) {
-        suggestionsContainer.innerHTML = '';
-        return;
-    }
-    
-    // Show max 3 suggestions
-    const topSuggestions = feedback.slice(0, 3);
-    
-    if (topSuggestions.length === 0) {
-        suggestionsContainer.innerHTML = '';
-        return;
-    }
-    
-    let html = '<div class="suggestions-title">Suggestions to improve score:</div>';
-    topSuggestions.forEach(suggestion => {
-        html += `<div class="suggestion-item">${escapeHtml(suggestion)}</div>`;
+function updateATSScore() {
+    const { score, suggestions } = calculateATSScore();
+    const band   = _getScoreBand(score);
+    const circ   = 314; // 2 * PI * r=50
+    const offset = circ - (score / 100) * circ;
+
+    // ── Builder page (uses legacy IDs) ──────────────────────────────────────
+    const numEl    = document.getElementById('score-number');
+    const circEl   = document.getElementById('score-circle');
+    const suggEl   = document.getElementById('suggestions-container');
+    const labelEl  = document.getElementById('score-status-label');
+
+    if (numEl)   numEl.textContent = score;
+    if (circEl)  { circEl.style.strokeDashoffset = offset; circEl.style.stroke = band.stroke; }
+    if (labelEl) { labelEl.textContent = band.label; labelEl.className = 'score-status-label ' + band.cls; }
+    if (suggEl)  renderSuggestions(suggEl, score, suggestions);
+
+    // ── Preview page (uses data-attribute selectors) ─────────────────────────
+    document.querySelectorAll('[data-ats-number]').forEach(el => { el.textContent = score; });
+    document.querySelectorAll('[data-ats-label]').forEach(el => {
+        el.textContent = band.label;
+        el.className = 'score-status-label ' + band.cls;
     });
-    
-    suggestionsContainer.innerHTML = html;
+    document.querySelectorAll('[data-ats-circle]').forEach(el => {
+        el.style.strokeDashoffset = offset;
+        el.style.stroke = band.stroke;
+    });
+    document.querySelectorAll('[data-ats-suggestions]').forEach(el => {
+        renderSuggestions(el, score, suggestions);
+    });
+}
+
+function renderSuggestions(container, score, suggestions) {
+    if (!container) return;
+    if (score >= 100 || suggestions.length === 0) { container.innerHTML = ''; return; }
+    const top = suggestions.slice(0, 5);
+    let html = '<div class="suggestions-title">Suggestions to improve your score:</div>';
+    top.forEach(s => { html += `<div class="suggestion-item">${escapeHtml(s)}</div>`; });
+    container.innerHTML = html;
 }
 
 // ===== RESUME HTML HELPERS =====
@@ -1050,23 +1055,26 @@ function _generateModernHTML({ personalInfo, summary, education, experience, pro
 function renderPreviewPage() {
     const template = document.getElementById('preview-template');
     const clone = template.content.cloneNode(true);
-    
+
     const appContent = document.getElementById('app-content');
     appContent.appendChild(clone);
-    
-    // Setup template switcher
+
+    // Template switcher + color picker
     setupTemplateSwitcher();
-    
-    // Setup export actions
+
+    // Export actions
     setupExportActions();
-    
-    // Render resume in full preview
+
+    // Render resume
     const fullPreview = document.getElementById('full-preview-content');
     fullPreview.innerHTML = generateResumeHTML();
-    
-    // Apply current template + accent color
+
+    // Apply template + accent color
     applyTemplate(APP_STATE.template);
     applyAccentColor(APP_STATE.accentColor);
+
+    // Render ATS score panel on preview page
+    updateATSScore();
 }
 
 // ===== PROOF PAGE =====

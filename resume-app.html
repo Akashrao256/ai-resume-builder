@@ -185,7 +185,7 @@
                     <!-- ATS Score Module -->
                     <div class="ats-score-module">
                         <div class="score-header">
-                            <h3>ATS Readiness Score</h3>
+                            <h3>ATS Resume Score</h3>
                         </div>
                         <div class="score-display">
                             <div class="score-meter">
@@ -195,10 +195,13 @@
                                 </svg>
                                 <div class="score-number" id="score-number">0</div>
                             </div>
-                            <div class="score-label">out of 100</div>
+                            <div class="score-label-group">
+                                <div class="score-label">ATS Resume Score</div>
+                                <div class="score-status-label score-band-red" id="score-status-label">Needs Work</div>
+                            </div>
                         </div>
                         <div class="suggestions-container" id="suggestions-container">
-                            <!-- Smart suggestions render here -->
+                            <!-- Suggestions render here -->
                         </div>
                     </div>
 
@@ -235,6 +238,24 @@
                     <!-- Populated by setupTemplateSwitcher() -->
                 </div>
 
+                <!-- ATS Score Panel (preview page) -->
+                <div class="ats-score-module ats-preview-panel">
+                    <div class="ats-preview-inner">
+                        <div class="score-meter score-meter-sm">
+                            <svg class="score-circle" viewBox="0 0 120 120">
+                                <circle class="score-bg" cx="60" cy="60" r="50"></circle>
+                                <circle class="score-fill" cx="60" cy="60" r="50" data-ats-circle></circle>
+                            </svg>
+                            <div class="score-number score-number-sm" data-ats-number>0</div>
+                        </div>
+                        <div class="ats-preview-meta">
+                            <div class="ats-preview-title">ATS Resume Score</div>
+                            <div class="score-status-label score-band-red" data-ats-label>Needs Work</div>
+                            <div class="suggestions-container" data-ats-suggestions></div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Export Actions -->
                 <div class="export-actions">
                     <button class="btn-export btn-export-primary" id="export-print-btn">
@@ -244,7 +265,7 @@
                         Copy Resume as Text
                     </button>
                 </div>
-                
+
                 <div id="full-preview-content" class="resume-document resume-print">
                     <!-- Full preview renders here -->
                 </div>

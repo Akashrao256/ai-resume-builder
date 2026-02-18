@@ -582,12 +582,6 @@ p {
     color: var(--color-text-primary);
 }
 
-.score-display {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: var(--space-lg) 0;
-}
 
 .score-meter {
     position: relative;
@@ -666,6 +660,100 @@ p {
 .suggestion-item:last-child {
     margin-bottom: 0;
 }
+
+/* === Score Band Colors === */
+.score-band-red {
+    color: #c0392b;
+}
+
+.score-band-amber {
+    color: #d4900a;
+}
+
+.score-band-green {
+    color: #27ae60;
+}
+
+/* Status label below score meter */
+.score-status-label {
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 4px;
+}
+
+/* Label group (builder page: stacks score label + status) */
+.score-label-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    margin-top: var(--space-xs);
+}
+
+/* Score display: row on builder (meter left, label right) */
+.score-display {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    padding: var(--space-md) 0;
+}
+
+/* === Preview Page ATS Panel (horizontal compact layout) === */
+.ats-preview-panel {
+    margin-bottom: var(--space-lg);
+}
+
+.ats-preview-inner {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+}
+
+.score-meter-sm {
+    width: 80px;
+    height: 80px;
+    flex-shrink: 0;
+}
+
+.score-number-sm {
+    font-size: 1.4rem;
+}
+
+.ats-preview-meta {
+    flex: 1;
+}
+
+.ats-preview-title {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-muted);
+    margin-bottom: 4px;
+}
+
+.ats-preview-meta .suggestions-container {
+    margin-top: var(--space-sm);
+    padding-top: var(--space-sm);
+    border-top: 1px solid var(--color-border-light);
+}
+
+.ats-preview-meta .suggestions-container:empty {
+    display: none;
+}
+
+/* Hide ATS panel on print */
+@media print {
+    .ats-preview-panel {
+        display: none !important;
+    }
+}
+
+
 
 /* === Template Switcher (new thumbnail system) === */
 .template-switcher,
