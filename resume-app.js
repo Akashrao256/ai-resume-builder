@@ -1,4 +1,4 @@
-// ===== STATE MANAGEMENT =====
+﻿// ===== STATE MANAGEMENT =====
 const APP_STATE = {
     resume: {
         personalInfo: {
@@ -21,8 +21,18 @@ const APP_STATE = {
             linkedin: ''
         }
     },
-    template: 'classic' // classic, modern, minimal
+    template: 'classic',   // classic | modern | minimal
+    accentColor: 'hsl(168, 60%, 40%)' // default: teal
 };
+
+// Accent color palette — scalable for future additions
+const ACCENT_COLORS = [
+    { name: 'Teal',     value: 'hsl(168, 60%, 40%)', id: 'teal'     },
+    { name: 'Navy',     value: 'hsl(220, 60%, 35%)', id: 'navy'     },
+    { name: 'Burgundy', value: 'hsl(345, 60%, 35%)', id: 'burgundy' },
+    { name: 'Forest',   value: 'hsl(150, 50%, 30%)', id: 'forest'   },
+    { name: 'Charcoal', value: 'hsl(0,   0%, 25%)',  id: 'charcoal' }
+];
 
 // ===== SAMPLE DATA =====
 const SAMPLE_DATA = {
@@ -120,6 +130,7 @@ function loadState() {
                 }));
             }
             if (loaded.template) APP_STATE.template = loaded.template;
+            if (loaded.accentColor) APP_STATE.accentColor = loaded.accentColor;
         } catch (e) {
             console.error('Failed to load state:', e);
         }
@@ -202,8 +213,9 @@ function renderBuilderPage() {
     renderExperienceList();
     renderProjectsList();
     
-    // Apply current template
+    // Apply current template + accent color
     applyTemplate(APP_STATE.template);
+    applyAccentColor(APP_STATE.accentColor);
     
     // Update preview
     updatePreview();
@@ -680,8 +692,9 @@ function updatePreview() {
     
     previewContainer.innerHTML = generateResumeHTML();
     
-    // Apply current template
+    // Apply current template + accent color
     applyTemplate(APP_STATE.template);
+    applyAccentColor(APP_STATE.accentColor);
     
     // Update ATS score
     updateATSScore();
@@ -840,148 +853,198 @@ function renderSuggestions(score, feedback) {
     suggestionsContainer.innerHTML = html;
 }
 
+// ===== RESUME HTML HELPERS =====
+function _buildProjectsHTML(projects) {
+    const validProjects = projects.filter(p => p.title || p.description || (p.techStack && p.techStack.length));
+    if (!validProjects.length) return '';
+    let html = '<div class="resume-section">';
+    html += '<h2 class="resume-section-title">Projects</h2>';
+    validProjects.forEach(proj => {
+        html += '<div class="resume-entry">';
+        html += '<div class="resume-entry-header">';
+        if (proj.title) html += `<span class="resume-entry-title">${escapeHtml(proj.title)}</span>`;
+        html += '<span class="resume-project-links">';
+        if (proj.liveUrl) html += `<a href="${escapeHtml(proj.liveUrl)}" target="_blank" class="resume-proj-link">&#127760; Live</a>`;
+        if (proj.githubUrl) html += `<a href="${escapeHtml(proj.githubUrl)}" target="_blank" class="resume-proj-link">&#128279; GitHub</a>`;
+        html += '</span></div>';
+        if (proj.description) html += `<p class="resume-entry-description">${escapeHtml(proj.description)}</p>`;
+        if (proj.techStack && proj.techStack.length) {
+            html += '<div class="resume-skills" style="margin-top:0.4rem">';
+            proj.techStack.forEach(t => { html += `<span class="skill-tag">${escapeHtml(t)}</span>`; });
+            html += '</div>';
+        }
+        html += '</div>';
+    });
+    html += '</div>';
+    return html;
+}
+
+function _buildExperienceHTML(experience) {
+    if (!experience.length) return '';
+    let html = '<div class="resume-section"><h2 class="resume-section-title">Work Experience</h2>';
+    experience.forEach(exp => {
+        if (exp.company || exp.role || exp.duration || exp.description) {
+            html += '<div class="resume-entry"><div class="resume-entry-header">';
+            if (exp.role) html += `<span class="resume-entry-title">${escapeHtml(exp.role)}</span>`;
+            if (exp.duration) html += `<span class="resume-entry-meta">${escapeHtml(exp.duration)}</span>`;
+            html += '</div>';
+            if (exp.company) html += `<div class="resume-entry-subtitle">${escapeHtml(exp.company)}</div>`;
+            if (exp.description) html += `<p class="resume-entry-description">${escapeHtml(exp.description)}</p>`;
+            html += '</div>';
+        }
+    });
+    return html + '</div>';
+}
+
+function _buildEducationHTML(education) {
+    if (!education.length) return '';
+    let html = '<div class="resume-section"><h2 class="resume-section-title">Education</h2>';
+    education.forEach(edu => {
+        if (edu.institution || edu.degree || edu.year) {
+            html += '<div class="resume-entry"><div class="resume-entry-header">';
+            if (edu.institution) html += `<span class="resume-entry-title">${escapeHtml(edu.institution)}</span>`;
+            if (edu.year) html += `<span class="resume-entry-meta">${escapeHtml(edu.year)}</span>`;
+            html += '</div>';
+            if (edu.degree) html += `<div class="resume-entry-subtitle">${escapeHtml(edu.degree)}</div>`;
+            html += '</div>';
+        }
+    });
+    return html + '</div>';
+}
+
+function _buildSkillsHTML(skills) {
+    const technical = skills.technical || [];
+    const soft = skills.soft || [];
+    const tools = skills.tools || [];
+    if (!technical.length && !soft.length && !tools.length) return '';
+    let html = '<div class="resume-section"><h2 class="resume-section-title">Skills</h2>';
+    if (technical.length) {
+        html += '<div class="resume-skill-group"><div class="resume-skill-group-label">Technical</div><div class="resume-skills">';
+        technical.forEach(s => { html += `<span class="skill-tag">${escapeHtml(s)}</span>`; });
+        html += '</div></div>';
+    }
+    if (soft.length) {
+        html += '<div class="resume-skill-group"><div class="resume-skill-group-label">Soft Skills</div><div class="resume-skills">';
+        soft.forEach(s => { html += `<span class="skill-tag">${escapeHtml(s)}</span>`; });
+        html += '</div></div>';
+    }
+    if (tools.length) {
+        html += '<div class="resume-skill-group"><div class="resume-skill-group-label">Tools &amp; Technologies</div><div class="resume-skills">';
+        tools.forEach(s => { html += `<span class="skill-tag">${escapeHtml(s)}</span>`; });
+        html += '</div></div>';
+    }
+    return html + '</div>';
+}
+
 function generateResumeHTML() {
     const { personalInfo, summary, education, experience, projects, skills, links } = APP_STATE.resume;
-    
+
+    // Modern template uses a two-column sidebar layout
+    if (APP_STATE.template === 'modern') {
+        return _generateModernHTML({ personalInfo, summary, education, experience, projects, skills, links });
+    }
+
+    // Classic & Minimal — single column
     let html = '';
-    
+
     // Header
     if (personalInfo.name || personalInfo.email || personalInfo.phone || personalInfo.location) {
         html += '<div class="resume-header">';
-        if (personalInfo.name) {
-            html += `<h1 class="resume-name">${escapeHtml(personalInfo.name)}</h1>`;
-        }
+        if (personalInfo.name) html += `<h1 class="resume-name">${escapeHtml(personalInfo.name)}</h1>`;
         html += '<div class="resume-contact">';
         if (personalInfo.email) html += `<span>${escapeHtml(personalInfo.email)}</span>`;
         if (personalInfo.phone) html += `<span>${escapeHtml(personalInfo.phone)}</span>`;
         if (personalInfo.location) html += `<span>${escapeHtml(personalInfo.location)}</span>`;
-        html += '</div>';
-        html += '</div>';
+        html += '</div></div>';
     }
-    
-    // Summary
+
     if (summary) {
         html += '<div class="resume-section">';
         html += '<h2 class="resume-section-title">Professional Summary</h2>';
         html += `<p class="resume-summary">${escapeHtml(summary)}</p>`;
         html += '</div>';
     }
-    
-    // Education
-    if (education.length > 0) {
-        html += '<div class="resume-section">';
-        html += '<h2 class="resume-section-title">Education</h2>';
-        education.forEach(edu => {
-            if (edu.institution || edu.degree || edu.year) {
-                html += '<div class="resume-entry">';
-                html += '<div class="resume-entry-header">';
-                if (edu.institution) html += `<span class="resume-entry-title">${escapeHtml(edu.institution)}</span>`;
-                if (edu.year) html += `<span class="resume-entry-meta">${escapeHtml(edu.year)}</span>`;
-                html += '</div>';
-                if (edu.degree) html += `<div class="resume-entry-subtitle">${escapeHtml(edu.degree)}</div>`;
-                html += '</div>';
-            }
-        });
-        html += '</div>';
-    }
-    
-    // Experience
-    if (experience.length > 0) {
-        html += '<div class="resume-section">';
-        html += '<h2 class="resume-section-title">Work Experience</h2>';
-        experience.forEach(exp => {
-            if (exp.company || exp.role || exp.duration || exp.description) {
-                html += '<div class="resume-entry">';
-                html += '<div class="resume-entry-header">';
-                if (exp.role) html += `<span class="resume-entry-title">${escapeHtml(exp.role)}</span>`;
-                if (exp.duration) html += `<span class="resume-entry-meta">${escapeHtml(exp.duration)}</span>`;
-                html += '</div>';
-                if (exp.company) html += `<div class="resume-entry-subtitle">${escapeHtml(exp.company)}</div>`;
-                if (exp.description) html += `<p class="resume-entry-description">${escapeHtml(exp.description)}</p>`;
-                html += '</div>';
-            }
-        });
-        html += '</div>';
-    }
-    
-    // Projects
-    if (projects.length > 0) {
-        const validProjects = projects.filter(p => p.title || p.description || (p.techStack && p.techStack.length));
-        if (validProjects.length > 0) {
-            html += '<div class="resume-section">';
-            html += '<h2 class="resume-section-title">Projects</h2>';
-            validProjects.forEach(proj => {
-                html += '<div class="resume-entry">';
-                // Title + links row
-                html += '<div class="resume-entry-header">';
-                if (proj.title) html += `<span class="resume-entry-title">${escapeHtml(proj.title)}</span>`;
-                html += '<span class="resume-project-links">';
-                if (proj.liveUrl) html += `<a href="${escapeHtml(proj.liveUrl)}" target="_blank" class="resume-proj-link">&#127760; Live</a>`;
-                if (proj.githubUrl) html += `<a href="${escapeHtml(proj.githubUrl)}" target="_blank" class="resume-proj-link">&#128279; GitHub</a>`;
-                html += '</span>';
-                html += '</div>';
-                if (proj.description) html += `<p class="resume-entry-description">${escapeHtml(proj.description)}</p>`;
-                if (proj.techStack && proj.techStack.length) {
-                    html += '<div class="resume-skills" style="margin-top:0.4rem">';
-                    proj.techStack.forEach(t => {
-                        html += `<span class="skill-tag">${escapeHtml(t)}</span>`;
-                    });
-                    html += '</div>';
-                }
-                html += '</div>';
-            });
-            html += '</div>';
-        }
-    }
-    
-    // Skills — grouped by category
-    const technical = skills.technical || [];
-    const soft = skills.soft || [];
-    const tools = skills.tools || [];
-    if (technical.length || soft.length || tools.length) {
-        html += '<div class="resume-section">';
-        html += '<h2 class="resume-section-title">Skills</h2>';
-        if (technical.length) {
-            html += '<div class="resume-skill-group">';
-            html += '<div class="resume-skill-group-label">Technical</div>';
-            html += '<div class="resume-skills">';
-            technical.forEach(s => { html += `<span class="skill-tag">${escapeHtml(s)}</span>`; });
-            html += '</div></div>';
-        }
-        if (soft.length) {
-            html += '<div class="resume-skill-group">';
-            html += '<div class="resume-skill-group-label">Soft Skills</div>';
-            html += '<div class="resume-skills">';
-            soft.forEach(s => { html += `<span class="skill-tag">${escapeHtml(s)}</span>`; });
-            html += '</div></div>';
-        }
-        if (tools.length) {
-            html += '<div class="resume-skill-group">';
-            html += '<div class="resume-skill-group-label">Tools &amp; Technologies</div>';
-            html += '<div class="resume-skills">';
-            tools.forEach(s => { html += `<span class="skill-tag">${escapeHtml(s)}</span>`; });
-            html += '</div></div>';
-        }
-        html += '</div>';
-    }
-    
+
+    html += _buildEducationHTML(education);
+    html += _buildExperienceHTML(experience);
+    html += _buildProjectsHTML(projects);
+    html += _buildSkillsHTML(skills);
+
     // Links
     if (links.github || links.linkedin) {
-        html += '<div class="resume-section">';
-        html += '<h2 class="resume-section-title">Links</h2>';
-        html += '<div class="resume-links">';
+        html += '<div class="resume-section"><h2 class="resume-section-title">Links</h2><div class="resume-links">';
         if (links.github) html += `<a href="${escapeHtml(links.github)}" class="resume-link" target="_blank">GitHub: ${escapeHtml(links.github)}</a>`;
         if (links.linkedin) html += `<a href="${escapeHtml(links.linkedin)}" class="resume-link" target="_blank">LinkedIn: ${escapeHtml(links.linkedin)}</a>`;
-        html += '</div>';
-        html += '</div>';
+        html += '</div></div>';
     }
-    
+
     if (!html) {
         html = '<p style="color: #6a6a6a; text-align: center; padding: 2rem;">Start filling out the form to see your resume preview...</p>';
     }
-    
+
     return html;
 }
+
+function _generateModernHTML({ personalInfo, summary, education, experience, projects, skills, links }) {
+    const technical = skills.technical || [];
+    const soft = skills.soft || [];
+    const tools = skills.tools || [];
+    const allSkills = [...technical, ...soft, ...tools];
+
+    // Sidebar
+    let sidebar = '<div class="resume-modern-sidebar">';
+    if (personalInfo.name) sidebar += `<h1 class="resume-name">${escapeHtml(personalInfo.name)}</h1>`;
+    sidebar += '<div class="resume-contact">';
+    if (personalInfo.email) sidebar += `<span>${escapeHtml(personalInfo.email)}</span>`;
+    if (personalInfo.phone) sidebar += `<span>${escapeHtml(personalInfo.phone)}</span>`;
+    if (personalInfo.location) sidebar += `<span>${escapeHtml(personalInfo.location)}</span>`;
+    sidebar += '</div>';
+
+    // Skills in sidebar
+    if (allSkills.length) {
+        sidebar += '<div class="sidebar-section-title">Skills</div>';
+        if (technical.length) {
+            sidebar += '<div class="sidebar-section-title" style="font-size:0.6rem;margin-top:0.5rem;border:none;color:rgba(255,255,255,0.5)">Technical</div>';
+            technical.forEach(s => { sidebar += `<span class="skill-tag">${escapeHtml(s)}</span>`; });
+        }
+        if (soft.length) {
+            sidebar += '<div class="sidebar-section-title" style="font-size:0.6rem;margin-top:0.5rem;border:none;color:rgba(255,255,255,0.5)">Soft Skills</div>';
+            soft.forEach(s => { sidebar += `<span class="skill-tag">${escapeHtml(s)}</span>`; });
+        }
+        if (tools.length) {
+            sidebar += '<div class="sidebar-section-title" style="font-size:0.6rem;margin-top:0.5rem;border:none;color:rgba(255,255,255,0.5)">Tools</div>';
+            tools.forEach(s => { sidebar += `<span class="skill-tag">${escapeHtml(s)}</span>`; });
+        }
+    }
+
+    // Links in sidebar
+    if (links.github || links.linkedin) {
+        sidebar += '<div class="sidebar-section-title">Links</div>';
+        if (links.github) sidebar += `<a href="${escapeHtml(links.github)}" class="resume-link" target="_blank">GitHub</a>`;
+        if (links.linkedin) sidebar += `<a href="${escapeHtml(links.linkedin)}" class="resume-link" target="_blank">LinkedIn</a>`;
+    }
+    sidebar += '</div>';
+
+    // Main column
+    let main = '<div class="resume-modern-main">';
+    if (summary) {
+        main += '<div class="resume-section"><h2 class="resume-section-title">Summary</h2>';
+        main += `<p class="resume-summary">${escapeHtml(summary)}</p></div>`;
+    }
+    main += _buildExperienceHTML(experience);
+    main += _buildProjectsHTML(projects);
+    main += _buildEducationHTML(education);
+    main += '</div>';
+
+    const hasContent = personalInfo.name || summary || education.length || experience.length || projects.length || allSkills.length;
+    if (!hasContent) {
+        return '<p style="color: #6a6a6a; text-align: center; padding: 2rem;">Start filling out the form to see your resume preview...</p>';
+    }
+
+    return `<div class="resume-modern-layout">${sidebar}${main}</div>`;
+}
+
+
 
 // ===== PREVIEW PAGE =====
 function renderPreviewPage() {
@@ -1001,8 +1064,9 @@ function renderPreviewPage() {
     const fullPreview = document.getElementById('full-preview-content');
     fullPreview.innerHTML = generateResumeHTML();
     
-    // Apply current template
+    // Apply current template + accent color
     applyTemplate(APP_STATE.template);
+    applyAccentColor(APP_STATE.accentColor);
 }
 
 // ===== PROOF PAGE =====
@@ -1015,56 +1079,232 @@ function renderProofPage() {
 }
 
 // ===== TEMPLATE SYSTEM =====
+
+// SVG thumbnail sketches for each template
+const TEMPLATE_THUMBNAILS = {
+    classic: `<svg viewBox="0 0 80 110" xmlns="http://www.w3.org/2000/svg">
+        <!-- Header -->
+        <rect x="8" y="6" width="64" height="6" rx="1" fill="var(--thumb-accent)" opacity="0.85"/>
+        <rect x="16" y="14" width="48" height="2.5" rx="1" fill="#bbb"/>
+        <!-- Divider -->
+        <line x1="8" y1="20" x2="72" y2="20" stroke="var(--thumb-accent)" stroke-width="0.8"/>
+        <!-- Section label -->
+        <rect x="8" y="24" width="20" height="2" rx="0.5" fill="var(--thumb-accent)" opacity="0.7"/>
+        <rect x="8" y="28" width="60" height="1.5" rx="0.5" fill="#ddd"/>
+        <rect x="8" y="31" width="52" height="1.5" rx="0.5" fill="#ddd"/>
+        <!-- Divider -->
+        <line x1="8" y1="36" x2="72" y2="36" stroke="var(--thumb-accent)" stroke-width="0.8"/>
+        <rect x="8" y="40" width="22" height="2" rx="0.5" fill="var(--thumb-accent)" opacity="0.7"/>
+        <rect x="8" y="44" width="60" height="1.5" rx="0.5" fill="#ddd"/>
+        <rect x="8" y="47" width="48" height="1.5" rx="0.5" fill="#ddd"/>
+        <rect x="8" y="50" width="56" height="1.5" rx="0.5" fill="#ddd"/>
+        <!-- Divider -->
+        <line x1="8" y1="56" x2="72" y2="56" stroke="var(--thumb-accent)" stroke-width="0.8"/>
+        <rect x="8" y="60" width="18" height="2" rx="0.5" fill="var(--thumb-accent)" opacity="0.7"/>
+        <rect x="8" y="64" width="40" height="1.5" rx="0.5" fill="#ddd"/>
+        <rect x="8" y="67" width="36" height="1.5" rx="0.5" fill="#ddd"/>
+        <!-- Skills chips -->
+        <rect x="8" y="74" width="14" height="4" rx="2" fill="var(--thumb-accent)" opacity="0.2"/>
+        <rect x="24" y="74" width="14" height="4" rx="2" fill="var(--thumb-accent)" opacity="0.2"/>
+        <rect x="40" y="74" width="14" height="4" rx="2" fill="var(--thumb-accent)" opacity="0.2"/>
+    </svg>`,
+
+    modern: `<svg viewBox="0 0 80 110" xmlns="http://www.w3.org/2000/svg">
+        <!-- Left sidebar -->
+        <rect x="0" y="0" width="26" height="110" rx="0" fill="var(--thumb-accent)" opacity="0.85"/>
+        <!-- Sidebar content -->
+        <rect x="3" y="8" width="20" height="3" rx="1" fill="white" opacity="0.9"/>
+        <rect x="3" y="13" width="16" height="2" rx="0.5" fill="white" opacity="0.6"/>
+        <rect x="3" y="22" width="14" height="1.5" rx="0.5" fill="white" opacity="0.5"/>
+        <rect x="3" y="25" width="18" height="1.5" rx="0.5" fill="white" opacity="0.4"/>
+        <rect x="3" y="28" width="16" height="1.5" rx="0.5" fill="white" opacity="0.4"/>
+        <rect x="3" y="36" width="12" height="1.5" rx="0.5" fill="white" opacity="0.7"/>
+        <rect x="3" y="40" width="18" height="2.5" rx="1" fill="white" opacity="0.25"/>
+        <rect x="3" y="44" width="18" height="2.5" rx="1" fill="white" opacity="0.25"/>
+        <rect x="3" y="48" width="14" height="2.5" rx="1" fill="white" opacity="0.25"/>
+        <!-- Main content area -->
+        <rect x="30" y="6" width="46" height="4" rx="1" fill="#333" opacity="0.8"/>
+        <rect x="30" y="12" width="36" height="2" rx="0.5" fill="#bbb"/>
+        <rect x="30" y="20" width="18" height="2" rx="0.5" fill="var(--thumb-accent)" opacity="0.8"/>
+        <rect x="30" y="24" width="44" height="1.5" rx="0.5" fill="#ddd"/>
+        <rect x="30" y="27" width="40" height="1.5" rx="0.5" fill="#ddd"/>
+        <rect x="30" y="30" width="44" height="1.5" rx="0.5" fill="#ddd"/>
+        <rect x="30" y="38" width="20" height="2" rx="0.5" fill="var(--thumb-accent)" opacity="0.8"/>
+        <rect x="30" y="42" width="44" height="1.5" rx="0.5" fill="#ddd"/>
+        <rect x="30" y="45" width="38" height="1.5" rx="0.5" fill="#ddd"/>
+        <rect x="30" y="48" width="42" height="1.5" rx="0.5" fill="#ddd"/>
+        <rect x="30" y="56" width="16" height="2" rx="0.5" fill="var(--thumb-accent)" opacity="0.8"/>
+        <rect x="30" y="60" width="44" height="1.5" rx="0.5" fill="#ddd"/>
+        <rect x="30" y="63" width="36" height="1.5" rx="0.5" fill="#ddd"/>
+    </svg>`,
+
+    minimal: `<svg viewBox="0 0 80 110" xmlns="http://www.w3.org/2000/svg">
+        <!-- Header -->
+        <rect x="8" y="8" width="50" height="5" rx="1" fill="#222" opacity="0.85"/>
+        <rect x="8" y="15" width="36" height="2" rx="0.5" fill="#bbb"/>
+        <!-- Generous whitespace, no dividers -->
+        <rect x="8" y="28" width="16" height="2" rx="0.5" fill="#555" opacity="0.7"/>
+        <rect x="8" y="33" width="60" height="1.5" rx="0.5" fill="#e0e0e0"/>
+        <rect x="8" y="36" width="52" height="1.5" rx="0.5" fill="#e0e0e0"/>
+        <rect x="8" y="48" width="18" height="2" rx="0.5" fill="#555" opacity="0.7"/>
+        <rect x="8" y="53" width="60" height="1.5" rx="0.5" fill="#e0e0e0"/>
+        <rect x="8" y="56" width="48" height="1.5" rx="0.5" fill="#e0e0e0"/>
+        <rect x="8" y="59" width="56" height="1.5" rx="0.5" fill="#e0e0e0"/>
+        <rect x="8" y="71" width="14" height="2" rx="0.5" fill="#555" opacity="0.7"/>
+        <rect x="8" y="76" width="44" height="1.5" rx="0.5" fill="#e0e0e0"/>
+        <rect x="8" y="79" width="38" height="1.5" rx="0.5" fill="#e0e0e0"/>
+        <!-- Skills — plain text style -->
+        <rect x="8" y="90" width="12" height="2" rx="0.5" fill="#555" opacity="0.7"/>
+        <rect x="8" y="94" width="60" height="1.5" rx="0.5" fill="#e0e0e0"/>
+    </svg>`
+};
+
 function setupTemplateSwitcher() {
-    const templateTabs = document.querySelectorAll('.template-tab');
-    
-    templateTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            const templateName = tab.getAttribute('data-template');
-            switchTemplate(templateName);
-        });
+    // Find the template-switcher container (builder) or template-toolbar (preview)
+    const switcherEl = document.querySelector('.template-switcher') ||
+                       document.querySelector('.template-toolbar');
+    if (!switcherEl) return;
+
+    // Replace inner content with thumbnail cards
+    switcherEl.innerHTML = `
+        <div class="template-picker-label">Template</div>
+        <div class="template-thumbnails" id="template-thumbnails"></div>
+    `;
+
+    const container = switcherEl.querySelector('#template-thumbnails');
+
+    const templates = [
+        { id: 'classic',  label: 'Classic'  },
+        { id: 'modern',   label: 'Modern'   },
+        { id: 'minimal',  label: 'Minimal'  }
+    ];
+
+    templates.forEach(({ id, label }) => {
+        const card = document.createElement('button');
+        card.className = 'template-thumb-card' + (APP_STATE.template === id ? ' active' : '');
+        card.dataset.template = id;
+        card.setAttribute('aria-label', `Switch to ${label} template`);
+        card.innerHTML = `
+            <div class="thumb-preview" style="--thumb-accent: ${APP_STATE.accentColor}">
+                ${TEMPLATE_THUMBNAILS[id]}
+            </div>
+            <div class="thumb-label">
+                <span>${label}</span>
+                <span class="thumb-check" aria-hidden="true">&#10003;</span>
+            </div>
+        `;
+        card.addEventListener('click', () => switchTemplate(id));
+        container.appendChild(card);
     });
-    
-    // Set active tab based on current template
-    templateTabs.forEach(tab => {
-        if (tab.getAttribute('data-template') === APP_STATE.template) {
-            tab.classList.add('active');
-        } else {
-            tab.classList.remove('active');
-        }
+
+    // Inject color picker below
+    setupColorPicker(switcherEl);
+}
+
+function setupColorPicker(parentEl) {
+    const pickerHTML = `
+        <div class="color-picker-section" id="color-picker-section">
+            <div class="color-picker-label">Accent Color</div>
+            <div class="color-swatches" id="color-swatches"></div>
+        </div>
+    `;
+    parentEl.insertAdjacentHTML('beforeend', pickerHTML);
+
+    const swatchContainer = parentEl.querySelector('#color-swatches');
+
+    ACCENT_COLORS.forEach(({ name, value, id }) => {
+        const btn = document.createElement('button');
+        btn.className = 'color-swatch' + (APP_STATE.accentColor === value ? ' active' : '');
+        btn.dataset.color = value;
+        btn.dataset.colorId = id;
+        btn.setAttribute('aria-label', `${name} accent color`);
+        btn.setAttribute('title', name);
+        btn.style.background = value;
+        btn.innerHTML = `<span class="swatch-check" aria-hidden="true">&#10003;</span>`;
+        btn.addEventListener('click', () => switchAccentColor(value));
+        swatchContainer.appendChild(btn);
     });
 }
 
+function switchAccentColor(colorValue) {
+    APP_STATE.accentColor = colorValue;
+    saveState();
+    applyAccentColor(colorValue);
+
+    // Update swatch active states
+    document.querySelectorAll('.color-swatch').forEach(s => {
+        s.classList.toggle('active', s.dataset.color === colorValue);
+    });
+
+    // Update thumb SVG accent
+    document.querySelectorAll('.thumb-preview').forEach(p => {
+        p.style.setProperty('--thumb-accent', colorValue);
+    });
+
+    // Re-render preview with new color
+    updatePreview();
+    console.log(`\u2713 Accent color changed to: ${colorValue}`);
+}
+
+function applyAccentColor(colorValue) {
+    document.documentElement.style.setProperty('--resume-accent', colorValue);
+}
+
 function switchTemplate(templateName) {
-    // Update state
     APP_STATE.template = templateName;
     saveState();
-    
-    // Update active tab
-    document.querySelectorAll('.template-tab').forEach(tab => {
-        if (tab.getAttribute('data-template') === templateName) {
-            tab.classList.add('active');
-        } else {
-            tab.classList.remove('active');
-        }
+
+    // Update thumbnail active states
+    document.querySelectorAll('.template-thumb-card').forEach(card => {
+        card.classList.toggle('active', card.dataset.template === templateName);
     });
-    
-    // Apply template styling (does NOT affect score or content)
+
+    // Apply template class + accent color
     applyTemplate(templateName);
-    
-    console.log(`✓ Template switched to: ${templateName}`);
+    applyAccentColor(APP_STATE.accentColor);
+
+    // Re-render preview content
+    updatePreview();
+
+    console.log(`\u2713 Template switched to: ${templateName}`);
 }
 
 function applyTemplate(templateName) {
     const resumeDocuments = document.querySelectorAll('.resume-document');
-    
     resumeDocuments.forEach(doc => {
-        // Remove all template classes
         doc.classList.remove('template-classic', 'template-modern', 'template-minimal');
-        
-        // Add new template class
         doc.classList.add(`template-${templateName}`);
     });
+    applyAccentColor(APP_STATE.accentColor);
+}
+
+// ===== TOAST NOTIFICATION =====
+function showToast(message, duration = 3000) {
+    // Remove any existing toast
+    const existing = document.getElementById('resume-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'resume-toast';
+    toast.className = 'resume-toast';
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
+    toast.innerHTML = `
+        <span class="toast-icon">&#10003;</span>
+        <span class="toast-message">${message}</span>
+    `;
+    document.body.appendChild(toast);
+
+    // Trigger enter animation
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => toast.classList.add('toast-visible'));
+    });
+
+    // Auto-dismiss
+    setTimeout(() => {
+        toast.classList.remove('toast-visible');
+        toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+    }, duration);
 }
 
 // ===== BULLET DISCIPLINE GUIDANCE =====
@@ -1287,7 +1527,8 @@ function showValidationModal(issues, actionType) {
 }
 
 function handlePrintExport() {
-    console.log('✓ Print/PDF export initiated');
+    showToast('PDF export ready! Check your downloads.');
+    console.log('Print/PDF export initiated');
     window.print();
 }
 

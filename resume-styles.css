@@ -16,14 +16,19 @@
     --color-bg-primary: #faf9f7;
     --color-bg-secondary: #f5f4f0;
     --color-bg-white: #ffffff;
+    --color-bg-subtle: #f8f7f5;
 
     /* Borders */
     --color-border-light: #e5e4e0;
     --color-border-medium: #d0cfc8;
+    --color-border: #e0dfd8;
 
     /* Accent - Minimal */
     --color-accent: #2d2d2d;
     --color-accent-hover: #1a1a1a;
+
+    /* Resume Accent Color (user-selectable, default: teal) */
+    --resume-accent: hsl(168, 60%, 40%);
 
     /* Spacing Scale */
     --space-xs: 0.5rem;
@@ -662,52 +667,155 @@ p {
     margin-bottom: 0;
 }
 
-/* === Template Switcher === */
-.template-switcher {
-    background-color: var(--color-bg-white);
-    border: 1px solid var(--color-border-light);
-    border-radius: var(--radius-md);
-    padding: var(--space-md);
-    margin-bottom: var(--space-lg);
-}
-
+/* === Template Switcher (new thumbnail system) === */
+.template-switcher,
 .template-toolbar {
     background-color: var(--color-bg-white);
     border: 1px solid var(--color-border-light);
     border-radius: var(--radius-md);
-    padding: var(--space-md);
-    margin-bottom: var(--space-xl);
+    padding: var(--space-md) var(--space-lg);
+    margin-bottom: var(--space-lg);
 }
 
-.template-tabs {
+.template-picker-label,
+.color-picker-label {
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-sm);
+}
+
+.template-thumbnails {
     display: flex;
     gap: var(--space-sm);
+    margin-bottom: var(--space-md);
 }
 
-.template-tab {
+.template-thumb-card {
     flex: 1;
-    padding: var(--space-sm) var(--space-md);
-    background-color: transparent;
-    border: 1px solid var(--color-border-medium);
-    border-radius: var(--radius-sm);
-    font-family: var(--font-sans);
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: var(--color-text-secondary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 6px 8px;
+    background: var(--color-bg-subtle);
+    border: 2px solid var(--color-border-light);
+    border-radius: var(--radius-md);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    font-family: var(--font-sans);
+    position: relative;
 }
 
-.template-tab:hover {
-    background-color: var(--color-bg-secondary);
-    color: var(--color-text-primary);
+.template-thumb-card:hover {
+    border-color: var(--resume-accent);
+    background: var(--color-bg-white);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.template-tab.active {
-    background-color: var(--color-accent);
-    color: var(--color-bg-white);
-    border-color: var(--color-accent);
+.template-thumb-card.active {
+    border-color: var(--resume-accent);
+    background: var(--color-bg-white);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--resume-accent) 15%, transparent);
 }
+
+.thumb-preview {
+    width: 100%;
+    aspect-ratio: 80 / 110;
+    overflow: hidden;
+    border-radius: 3px;
+    background: #fff;
+    border: 1px solid var(--color-border-light);
+}
+
+.thumb-preview svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.thumb-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    padding: 0 2px;
+}
+
+.thumb-check {
+    display: none;
+    font-size: 0.7rem;
+    color: var(--resume-accent);
+    font-weight: 700;
+}
+
+.template-thumb-card.active .thumb-check {
+    display: inline;
+}
+
+.template-thumb-card.active .thumb-label {
+    color: var(--resume-accent);
+}
+
+/* === Color Swatch Picker === */
+.color-picker-section {
+    border-top: 1px solid var(--color-border-light);
+    padding-top: var(--space-md);
+    margin-top: var(--space-xs);
+}
+
+.color-swatches {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.color-swatch {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    position: relative;
+    padding: 0;
+    outline: none;
+}
+
+.color-swatch:hover {
+    transform: scale(1.15);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.color-swatch.active {
+    border-color: var(--color-text-primary);
+    box-shadow: 0 0 0 2px var(--color-bg-white), 0 0 0 4px var(--color-text-primary);
+    transform: scale(1.1);
+}
+
+.swatch-check {
+    display: none;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    line-height: 1;
+}
+
+.color-swatch.active .swatch-check {
+    display: inline;
+}
+
 
 /* === Improvement Panel === */
 .improvement-panel {
@@ -789,7 +897,8 @@ p {
     font-size: 1.1rem;
     margin-bottom: var(--space-md);
     padding-bottom: var(--space-xs);
-    border-bottom: 1px solid var(--color-border-light);
+    border-bottom: 1.5px solid var(--resume-accent);
+    color: var(--resume-accent);
 }
 
 /* Modern Template */
@@ -800,7 +909,7 @@ p {
 .template-modern .resume-header {
     margin-bottom: var(--space-2xl);
     padding-bottom: var(--space-xl);
-    border-bottom: 3px solid var(--color-text-primary);
+    border-bottom: 3px solid var(--resume-accent);
 }
 
 .template-modern .resume-section {
@@ -815,7 +924,8 @@ p {
     letter-spacing: 0.05em;
     margin-bottom: var(--space-lg);
     padding-bottom: var(--space-sm);
-    border-bottom: 2px solid var(--color-text-primary);
+    border-bottom: 2px solid var(--resume-accent);
+    color: var(--resume-accent);
 }
 
 .template-modern .resume-entry {
@@ -1455,5 +1565,182 @@ label {
         border: none;
         padding: 0;
         color: inherit;
+    }
+}
+
+/* ============================================================
+   MODERN TEMPLATE — TWO-COLUMN SIDEBAR LAYOUT
+   ============================================================ */
+
+/* The modern template wraps resume content in a two-column grid */
+.resume-document.template-modern .resume-modern-layout {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    min-height: 100%;
+    gap: 0;
+}
+
+/* Sidebar */
+.resume-modern-sidebar {
+    background: var(--resume-accent);
+    padding: var(--space-xl) var(--space-lg);
+    color: white;
+}
+
+.resume-modern-sidebar .resume-name {
+    font-family: var(--font-sans);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: var(--space-xs);
+    line-height: 1.3;
+}
+
+.resume-modern-sidebar .resume-contact {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: var(--space-xl);
+}
+
+.resume-modern-sidebar .resume-contact span {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1.4;
+}
+
+.resume-modern-sidebar .sidebar-section-title {
+    font-family: var(--font-sans);
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: rgba(255, 255, 255, 0.65);
+    margin-bottom: var(--space-sm);
+    margin-top: var(--space-lg);
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.resume-modern-sidebar .sidebar-section-title:first-of-type {
+    margin-top: 0;
+}
+
+.resume-modern-sidebar .skill-tag {
+    display: block;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    border: none;
+    border-radius: 3px;
+    padding: 3px 8px;
+    font-size: 0.75rem;
+    margin-bottom: 4px;
+}
+
+.resume-modern-sidebar .resume-link {
+    display: block;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.75rem;
+    text-decoration: none;
+    margin-bottom: 4px;
+    word-break: break-all;
+}
+
+/* Main content area */
+.resume-modern-main {
+    padding: var(--space-xl) var(--space-xl);
+    background: white;
+}
+
+.resume-modern-main .resume-section {
+    margin-bottom: var(--space-xl);
+}
+
+.resume-modern-main .resume-section-title {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--resume-accent);
+    border-bottom: 2px solid var(--resume-accent);
+    padding-bottom: 4px;
+    margin-bottom: var(--space-md);
+}
+
+/* Print rules for modern two-column */
+@media print {
+    .resume-modern-sidebar {
+        background: #f0f0f0 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .resume-modern-sidebar .resume-name,
+    .resume-modern-sidebar .resume-contact span,
+    .resume-modern-sidebar .sidebar-section-title,
+    .resume-modern-sidebar .skill-tag,
+    .resume-modern-sidebar .resume-link {
+        color: #1a1a1a !important;
+    }
+
+    .resume-modern-sidebar .skill-tag {
+        background: rgba(0, 0, 0, 0.06) !important;
+    }
+}
+
+/* ============================================================
+   TOAST NOTIFICATION
+   ============================================================ */
+.resume-toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    background: #1a1a1a;
+    color: white;
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.12);
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    pointer-events: none;
+    max-width: 340px;
+}
+
+.resume-toast.toast-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    background: var(--resume-accent);
+    border-radius: 50%;
+    font-size: 0.7rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    color: white;
+}
+
+.toast-message {
+    line-height: 1.4;
+}
+
+/* Hide toast on print */
+@media print {
+    .resume-toast {
+        display: none !important;
     }
 }

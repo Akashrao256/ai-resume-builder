@@ -177,13 +177,9 @@
 
                 <!-- Right Column: Live Preview -->
                 <div class="builder-preview">
-                    <!-- Template Switcher -->
-                    <div class="template-switcher">
-                        <div class="template-tabs">
-                            <button class="template-tab active" data-template="classic">Classic</button>
-                            <button class="template-tab" data-template="modern">Modern</button>
-                            <button class="template-tab" data-template="minimal">Minimal</button>
-                        </div>
+                    <!-- Template + Color Picker -->
+                    <div class="template-switcher" id="template-switcher-builder">
+                        <!-- Populated by setupTemplateSwitcher() -->
                     </div>
 
                     <!-- ATS Score Module -->
@@ -234,13 +230,9 @@
     <template id="preview-template">
         <div class="preview-page">
             <div class="preview-container">
-                <!-- Template Switcher Toolbar -->
-                <div class="template-toolbar">
-                    <div class="template-tabs">
-                        <button class="template-tab active" data-template="classic">Classic</button>
-                        <button class="template-tab" data-template="modern">Modern</button>
-                        <button class="template-tab" data-template="minimal">Minimal</button>
-                    </div>
+                <!-- Template + Color Picker Toolbar -->
+                <div class="template-toolbar" id="template-toolbar-preview">
+                    <!-- Populated by setupTemplateSwitcher() -->
                 </div>
 
                 <!-- Export Actions -->
