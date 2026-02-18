@@ -104,18 +104,58 @@
                     </section>
 
                     <!-- Projects Section -->
-                    <section class="form-section">
-                        <h3>Projects</h3>
-                        <div id="projects-list"></div>
-                        <button class="btn-add" id="add-project-btn">+ Add Project</button>
+                    <section class="form-section accordion-section" id="projects-accordion">
+                        <button class="accordion-header" id="projects-accordion-btn">
+                            <span>Projects</span>
+                            <span class="accordion-chevron">&#8964;</span>
+                        </button>
+                        <div class="accordion-body" id="projects-accordion-body">
+                            <div id="projects-list"></div>
+                            <button class="btn-add" id="add-project-btn">+ Add Project</button>
+                        </div>
                     </section>
 
                     <!-- Skills Section -->
-                    <section class="form-section">
-                        <h3>Skills</h3>
-                        <div class="form-field">
-                            <label for="skills">Skills (comma-separated)</label>
-                            <input type="text" id="skills" name="skills" placeholder="JavaScript, React, Node.js, Python, AWS">
+                    <section class="form-section accordion-section" id="skills-accordion">
+                        <button class="accordion-header" id="skills-accordion-btn">
+                            <span>Skills</span>
+                            <span class="accordion-chevron">&#8964;</span>
+                        </button>
+                        <div class="accordion-body" id="skills-accordion-body">
+                            <button class="btn-suggest-skills" id="suggest-skills-btn">&#10024; Suggest Skills</button>
+
+                            <!-- Technical Skills -->
+                            <div class="skill-category">
+                                <div class="skill-category-label">
+                                    Technical Skills <span class="skill-count" id="count-technical">0</span>
+                                </div>
+                                <div class="tag-input-area" id="tags-technical">
+                                    <input class="tag-input-field" id="input-technical"
+                                           placeholder="e.g. React" />
+                                </div>
+                            </div>
+
+                            <!-- Soft Skills -->
+                            <div class="skill-category">
+                                <div class="skill-category-label">
+                                    Soft Skills <span class="skill-count" id="count-soft">0</span>
+                                </div>
+                                <div class="tag-input-area" id="tags-soft">
+                                    <input class="tag-input-field" id="input-soft"
+                                           placeholder="e.g. Leadership" />
+                                </div>
+                            </div>
+
+                            <!-- Tools & Technologies -->
+                            <div class="skill-category">
+                                <div class="skill-category-label">
+                                    Tools &amp; Technologies <span class="skill-count" id="count-tools">0</span>
+                                </div>
+                                <div class="tag-input-area" id="tags-tools">
+                                    <input class="tag-input-field" id="input-tools"
+                                           placeholder="e.g. Docker" />
+                                </div>
+                            </div>
                         </div>
                     </section>
 

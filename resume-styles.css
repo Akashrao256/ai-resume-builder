@@ -1122,3 +1122,338 @@ p {
         align-items: flex-start;
     }
 }
+
+/* ============================================================
+   ACCORDION SECTIONS
+   ============================================================ */
+.accordion-section {
+    padding: 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    margin-bottom: var(--space-xl);
+}
+
+.accordion-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-lg) var(--space-xl);
+    background: var(--color-bg-white);
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    text-align: left;
+    transition: background 0.15s ease;
+}
+
+.accordion-header:hover {
+    background: var(--color-bg-subtle);
+}
+
+.accordion-chevron {
+    font-size: 1.2rem;
+    transition: transform 0.2s ease;
+    color: var(--color-text-muted);
+    line-height: 1;
+}
+
+.accordion-body {
+    display: none;
+    padding: var(--space-lg) var(--space-xl) var(--space-xl);
+    border-top: 1px solid var(--color-border);
+    background: var(--color-bg-white);
+}
+
+.accordion-body.accordion-open {
+    display: block;
+}
+
+/* ============================================================
+   CHIP / TAG INPUT SYSTEM
+   ============================================================ */
+.tag-input-area {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    align-items: center;
+    min-height: 44px;
+    padding: var(--space-xs) var(--space-sm);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-white);
+    cursor: text;
+    transition: border-color 0.15s ease;
+}
+
+.tag-input-area:focus-within {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb, 30, 30, 30), 0.06);
+}
+
+.tag-input-field {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    color: var(--color-text-primary);
+    min-width: 120px;
+    flex: 1;
+    padding: var(--space-xs) var(--space-xs);
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px 3px 12px;
+    background: var(--color-bg-subtle);
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    white-space: nowrap;
+}
+
+.chip-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--color-text-muted);
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0;
+    border-radius: 50%;
+    transition: color 0.15s, background 0.15s;
+}
+
+.chip-remove:hover {
+    color: var(--color-text-primary);
+    background: var(--color-border);
+}
+
+/* ============================================================
+   SKILL CATEGORIES
+   ============================================================ */
+.skill-category {
+    margin-bottom: var(--space-lg);
+}
+
+.skill-category:last-child {
+    margin-bottom: 0;
+}
+
+.skill-category-label {
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.skill-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    background: var(--color-accent);
+    color: var(--color-bg-white);
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+/* Suggest Skills Button */
+.btn-suggest-skills {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-lg);
+    margin-bottom: var(--space-lg);
+    background: var(--color-bg-subtle);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-suggest-skills:hover:not(:disabled) {
+    background: var(--color-accent);
+    color: var(--color-bg-white);
+    border-color: var(--color-accent);
+}
+
+.btn-suggest-skills:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ============================================================
+   PROJECT ACCORDION CARDS
+   ============================================================ */
+.project-card {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-md);
+    overflow: hidden;
+    background: var(--color-bg-white);
+    transition: box-shadow 0.2s ease;
+}
+
+.project-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.project-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-md) var(--space-lg);
+    background: var(--color-bg-subtle);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.project-card-title {
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.project-card-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex-shrink: 0;
+}
+
+.project-toggle-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    color: var(--color-text-muted);
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    transition: transform 0.2s ease, color 0.15s;
+    line-height: 1;
+}
+
+.project-toggle-btn:hover {
+    color: var(--color-text-primary);
+}
+
+.project-card-body {
+    padding: var(--space-lg);
+    display: block;
+}
+
+.project-card.collapsed .project-card-body {
+    display: none;
+}
+
+.project-card.collapsed .project-card-header {
+    border-bottom: none;
+}
+
+/* Char counter */
+.char-counter {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--color-text-muted);
+    margin-left: auto;
+    float: right;
+}
+
+label {
+    display: flex;
+    align-items: center;
+}
+
+/* ============================================================
+   RESUME PREVIEW — SKILL GROUPS
+   ============================================================ */
+.resume-skill-group {
+    margin-bottom: var(--space-md);
+}
+
+.resume-skill-group:last-child {
+    margin-bottom: 0;
+}
+
+.resume-skill-group-label {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-xs);
+}
+
+/* ============================================================
+   RESUME PREVIEW — PROJECT LINKS
+   ============================================================ */
+.resume-project-links {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.resume-proj-link {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-accent);
+    text-decoration: none;
+    padding: 2px 8px;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+}
+
+.resume-proj-link:hover {
+    background: var(--color-accent);
+    color: var(--color-bg-white);
+    border-color: var(--color-accent);
+}
+
+/* Print: hide project links decorations */
+@media print {
+    .resume-proj-link {
+        border: none;
+        padding: 0;
+        color: inherit;
+    }
+}

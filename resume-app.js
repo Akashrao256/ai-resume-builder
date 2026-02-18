@@ -11,7 +11,11 @@ const APP_STATE = {
         education: [],
         experience: [],
         projects: [],
-        skills: '',
+        skills: {
+            technical: [],
+            soft: [],
+            tools: []
+        },
         links: {
             github: '',
             linkedin: ''
@@ -57,17 +61,25 @@ const SAMPLE_DATA = {
     ],
     projects: [
         {
-            name: 'Open Source Analytics Platform',
+            title: 'Open Source Analytics Platform',
             description: 'Created real-time analytics dashboard used by 10K+ developers worldwide. Built with React, D3.js, and PostgreSQL.',
-            techStack: 'React, D3.js, PostgreSQL, Docker'
+            techStack: ['React', 'D3.js', 'PostgreSQL', 'Docker'],
+            liveUrl: '',
+            githubUrl: 'https://github.com/sarahchen/analytics'
         },
         {
-            name: 'AI Resume Builder',
+            title: 'AI Resume Builder',
             description: 'Developed intelligent resume creation tool with ATS optimization. Features include AI-powered content suggestions and real-time preview.',
-            techStack: 'Next.js, OpenAI API, TailwindCSS'
+            techStack: ['Next.js', 'OpenAI API', 'TailwindCSS'],
+            liveUrl: 'https://airesume.demo',
+            githubUrl: 'https://github.com/sarahchen/resume'
         }
     ],
-    skills: 'JavaScript, TypeScript, React, Node.js, Python, AWS, Docker, PostgreSQL, Git, CI/CD',
+    skills: {
+        technical: ['JavaScript', 'TypeScript', 'React', 'Node.js', 'Python'],
+        soft: ['Team Leadership', 'Problem Solving', 'Communication'],
+        tools: ['Git', 'Docker', 'AWS', 'PostgreSQL', 'CI/CD']
+    },
     links: {
         github: 'https://github.com/sarahchen',
         linkedin: 'https://linkedin.com/in/sarahchen'
@@ -84,7 +96,30 @@ function loadState() {
     if (saved) {
         try {
             const loaded = JSON.parse(saved);
-            Object.assign(APP_STATE, loaded);
+            // Deep merge to preserve new schema defaults
+            if (loaded.resume) {
+                Object.assign(APP_STATE.resume, loaded.resume);
+                // Ensure skills is always the structured object
+                if (typeof APP_STATE.resume.skills === 'string') {
+                    // Migrate old comma-string to technical array
+                    const oldSkills = APP_STATE.resume.skills
+                        .split(',').map(s => s.trim()).filter(s => s);
+                    APP_STATE.resume.skills = { technical: oldSkills, soft: [], tools: [] };
+                }
+                if (!APP_STATE.resume.skills || typeof APP_STATE.resume.skills !== 'object' || Array.isArray(APP_STATE.resume.skills)) {
+                    APP_STATE.resume.skills = { technical: [], soft: [], tools: [] };
+                }
+                // Ensure projects have new schema
+                APP_STATE.resume.projects = APP_STATE.resume.projects.map(p => ({
+                    title: p.title || p.name || '',
+                    description: p.description || '',
+                    techStack: Array.isArray(p.techStack) ? p.techStack
+                        : (p.techStack ? p.techStack.split(',').map(s => s.trim()).filter(s => s) : []),
+                    liveUrl: p.liveUrl || '',
+                    githubUrl: p.githubUrl || ''
+                }));
+            }
+            if (loaded.template) APP_STATE.template = loaded.template;
         } catch (e) {
             console.error('Failed to load state:', e);
         }
@@ -199,16 +234,80 @@ function setupBuilderListeners() {
             updatePreview();
         });
     }
-    
-    // Skills
-    const skillsInput = document.getElementById('skills');
-    if (skillsInput) {
-        skillsInput.addEventListener('input', (e) => {
-            APP_STATE.resume.skills = e.target.value;
-            saveState();
-            updatePreview();
+
+    // ===== SKILLS TAG INPUT SYSTEM =====
+    ['technical', 'soft', 'tools'].forEach(category => {
+        const input = document.getElementById(`input-${category}`);
+        const tagArea = document.getElementById(`tags-${category}`);
+        if (!input || !tagArea) return;
+
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const val = input.value.trim();
+                if (!val) return;
+                const arr = APP_STATE.resume.skills[category];
+                if (arr.includes(val)) { input.value = ''; return; } // no duplicates
+                arr.push(val);
+                input.value = '';
+                saveState(); updatePreview();
+                renderSkillChips(category);
+            }
+        });
+
+        // Remove chip via delegation
+        tagArea.addEventListener('click', e => {
+            if (e.target.classList.contains('chip-remove')) {
+                const skill = e.target.dataset.skill;
+                APP_STATE.resume.skills[category] =
+                    APP_STATE.resume.skills[category].filter(s => s !== skill);
+                saveState(); updatePreview();
+                renderSkillChips(category);
+            }
+        });
+    });
+
+    // Suggest Skills button
+    const suggestBtn = document.getElementById('suggest-skills-btn');
+    if (suggestBtn) {
+        suggestBtn.addEventListener('click', () => {
+            suggestBtn.textContent = 'Loading...';
+            suggestBtn.disabled = true;
+            setTimeout(() => {
+                const suggestions = {
+                    technical: ['TypeScript', 'React', 'Node.js', 'PostgreSQL', 'GraphQL'],
+                    soft: ['Team Leadership', 'Problem Solving'],
+                    tools: ['Git', 'Docker', 'AWS']
+                };
+                ['technical', 'soft', 'tools'].forEach(cat => {
+                    suggestions[cat].forEach(skill => {
+                        if (!APP_STATE.resume.skills[cat].includes(skill)) {
+                            APP_STATE.resume.skills[cat].push(skill);
+                        }
+                    });
+                    renderSkillChips(cat);
+                });
+                saveState(); updatePreview();
+                suggestBtn.textContent = '\u2728 Suggest Skills';
+                suggestBtn.disabled = false;
+            }, 1000);
         });
     }
+
+    // Accordion toggles
+    ['skills', 'projects'].forEach(section => {
+        const btn = document.getElementById(`${section}-accordion-btn`);
+        const body = document.getElementById(`${section}-accordion-body`);
+        if (btn && body) {
+            btn.addEventListener('click', () => {
+                const isOpen = body.classList.toggle('accordion-open');
+                btn.querySelector('.accordion-chevron').style.transform = isOpen ? 'rotate(180deg)' : '';
+            });
+            // Open by default
+            body.classList.add('accordion-open');
+            btn.querySelector('.accordion-chevron').style.transform = 'rotate(180deg)';
+        }
+    });
     
     // Links
     ['github', 'linkedin'].forEach(field => {
@@ -241,12 +340,35 @@ function loadFormData() {
     // Summary
     document.getElementById('summary').value = APP_STATE.resume.summary || '';
     
-    // Skills
-    document.getElementById('skills').value = APP_STATE.resume.skills || '';
+    // Skills chips
+    ['technical', 'soft', 'tools'].forEach(cat => renderSkillChips(cat));
     
     // Links
     document.getElementById('github').value = APP_STATE.resume.links.github || '';
     document.getElementById('linkedin').value = APP_STATE.resume.links.linkedin || '';
+}
+
+function renderSkillChips(category) {
+    const tagArea = document.getElementById(`tags-${category}`);
+    const countEl = document.getElementById(`count-${category}`);
+    if (!tagArea) return;
+
+    const arr = APP_STATE.resume.skills[category] || [];
+
+    // Remove old chips (keep the input)
+    const input = tagArea.querySelector('.tag-input-field');
+    tagArea.innerHTML = '';
+
+    arr.forEach(skill => {
+        const chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.innerHTML = `${escapeHtml(skill)}<button class="chip-remove" data-skill="${escapeHtml(skill)}" aria-label="Remove">×</button>`;
+        tagArea.appendChild(chip);
+    });
+
+    tagArea.appendChild(input);
+
+    if (countEl) countEl.textContent = arr.length;
 }
 
 function loadSampleData() {
@@ -413,12 +535,14 @@ function renderExperienceList() {
     });
 }
 
-// ===== PROJECTS SECTION =====
+// ===== PROJECTS SECTION (accordion cards) =====
 function addProjectEntry() {
     APP_STATE.resume.projects.push({
-        name: '',
+        title: '',
         description: '',
-        techStack: ''
+        techStack: [],
+        liveUrl: '',
+        githubUrl: ''
     });
     saveState();
     renderProjectsList();
@@ -433,56 +557,118 @@ function removeProjectEntry(index) {
 
 function renderProjectsList() {
     const container = document.getElementById('projects-list');
+    if (!container) return;
     container.innerHTML = '';
-    
+
     APP_STATE.resume.projects.forEach((proj, index) => {
-        const entryDiv = document.createElement('div');
-        entryDiv.className = 'entry-item';
-        
-        entryDiv.innerHTML = `
-            <div class="entry-header">
-                <span class="entry-label">Project ${index + 1}</span>
-                <button class="btn-remove" data-index="${index}">Remove</button>
+        const card = document.createElement('div');
+        card.className = 'project-card';
+        card.dataset.index = index;
+
+        const headerLabel = proj.title ? escapeHtml(proj.title) : 'Untitled Project';
+        const descLen = (proj.description || '').length;
+        const techChipsHTML = (proj.techStack || []).map(t =>
+            `<span class="chip">${escapeHtml(t)}<button class="chip-remove" data-skill="${escapeHtml(t)}" aria-label="Remove">×</button></span>`
+        ).join('');
+
+        card.innerHTML = `
+            <div class="project-card-header">
+                <span class="project-card-title">${headerLabel}</span>
+                <div class="project-card-actions">
+                    <button class="project-toggle-btn" aria-label="Toggle">&#8964;</button>
+                    <button class="btn-remove proj-delete-btn">Delete</button>
+                </div>
             </div>
-            <div class="form-field">
-                <label>Project Name</label>
-                <input type="text" class="proj-name" data-index="${index}" value="${proj.name || ''}" placeholder="E-Commerce Platform">
-            </div>
-            <div class="form-field">
-                <label>Description</label>
-                <textarea class="proj-description" data-index="${index}" rows="2" placeholder="Brief description of the project...">${proj.description || ''}</textarea>
-            </div>
-            <div class="form-field">
-                <label>Tech Stack</label>
-                <input type="text" class="proj-tech" data-index="${index}" value="${proj.techStack || ''}" placeholder="React, Node.js, MongoDB">
+            <div class="project-card-body">
+                <div class="form-field">
+                    <label>Project Title</label>
+                    <input type="text" class="proj-title-input" value="${escapeHtml(proj.title)}" placeholder="E-Commerce Platform">
+                </div>
+                <div class="form-field">
+                    <label>Description <span class="char-counter">${descLen}/200</span></label>
+                    <textarea class="proj-desc-input" rows="3" maxlength="200" placeholder="Brief description of the project...">${escapeHtml(proj.description)}</textarea>
+                </div>
+                <div class="form-field">
+                    <label>Tech Stack</label>
+                    <div class="tag-input-area proj-tech-tags">${techChipsHTML}<input class="tag-input-field proj-tech-input" placeholder="e.g. React"></div>
+                </div>
+                <div class="form-field">
+                    <label>Live URL <span style="color:var(--color-text-muted);font-weight:400">(optional)</span></label>
+                    <input type="url" class="proj-live-input" value="${escapeHtml(proj.liveUrl)}" placeholder="https://myproject.com">
+                </div>
+                <div class="form-field">
+                    <label>GitHub URL <span style="color:var(--color-text-muted);font-weight:400">(optional)</span></label>
+                    <input type="url" class="proj-github-input" value="${escapeHtml(proj.githubUrl)}" placeholder="https://github.com/user/repo">
+                </div>
             </div>
         `;
-        
-        container.appendChild(entryDiv);
-        
-        // Event listeners
-        entryDiv.querySelector('.btn-remove').addEventListener('click', () => removeProjectEntry(index));
-        
-        entryDiv.querySelector('.proj-name').addEventListener('input', (e) => {
-            APP_STATE.resume.projects[index].name = e.target.value;
-            saveState();
-            updatePreview();
+
+        container.appendChild(card);
+
+        // Toggle collapse
+        const toggleBtn = card.querySelector('.project-toggle-btn');
+        const body = card.querySelector('.project-card-body');
+        toggleBtn.addEventListener('click', () => {
+            const collapsed = card.classList.toggle('collapsed');
+            toggleBtn.style.transform = collapsed ? 'rotate(-90deg)' : '';
         });
-        
-        entryDiv.querySelector('.proj-description').addEventListener('input', (e) => {
-            APP_STATE.resume.projects[index].description = e.target.value;
-            saveState();
-            updatePreview();
-            
-            // Add bullet guidance hint
-            const fieldContainer = e.target.closest('.form-field');
-            addBulletHint(fieldContainer, e.target.value);
+
+        // Delete
+        card.querySelector('.proj-delete-btn').addEventListener('click', () => removeProjectEntry(index));
+
+        // Title
+        card.querySelector('.proj-title-input').addEventListener('input', e => {
+            APP_STATE.resume.projects[index].title = e.target.value;
+            card.querySelector('.project-card-title').textContent = e.target.value || 'Untitled Project';
+            saveState(); updatePreview();
         });
-        
-        entryDiv.querySelector('.proj-tech').addEventListener('input', (e) => {
-            APP_STATE.resume.projects[index].techStack = e.target.value;
-            saveState();
-            updatePreview();
+
+        // Description + char counter
+        const descTA = card.querySelector('.proj-desc-input');
+        const charCounter = card.querySelector('.char-counter');
+        descTA.addEventListener('input', e => {
+            const val = e.target.value;
+            charCounter.textContent = `${val.length}/200`;
+            APP_STATE.resume.projects[index].description = val;
+            saveState(); updatePreview();
+            addBulletHint(e.target.closest('.form-field'), val);
+        });
+
+        // Tech stack tag input
+        const techTagArea = card.querySelector('.proj-tech-tags');
+        const techInput = card.querySelector('.proj-tech-input');
+        techInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const val = techInput.value.trim();
+                if (!val) return;
+                if (APP_STATE.resume.projects[index].techStack.includes(val)) { techInput.value = ''; return; }
+                APP_STATE.resume.projects[index].techStack.push(val);
+                techInput.value = '';
+                saveState(); updatePreview();
+                renderProjectsList();
+            }
+        });
+        techTagArea.addEventListener('click', e => {
+            if (e.target.classList.contains('chip-remove')) {
+                const skill = e.target.dataset.skill;
+                APP_STATE.resume.projects[index].techStack =
+                    APP_STATE.resume.projects[index].techStack.filter(s => s !== skill);
+                saveState(); updatePreview();
+                renderProjectsList();
+            }
+        });
+
+        // Live URL
+        card.querySelector('.proj-live-input').addEventListener('input', e => {
+            APP_STATE.resume.projects[index].liveUrl = e.target.value;
+            saveState(); updatePreview();
+        });
+
+        // GitHub URL
+        card.querySelector('.proj-github-input').addEventListener('input', e => {
+            APP_STATE.resume.projects[index].githubUrl = e.target.value;
+            saveState(); updatePreview();
         });
     });
 }
@@ -510,6 +696,13 @@ function calculateATSScore() {
     
     let score = 0;
     const feedback = [];
+
+    // Flatten skills for counting
+    const allSkills = [
+        ...(skills.technical || []),
+        ...(skills.soft || []),
+        ...(skills.tools || [])
+    ];
     
     // Rule 1: Summary length (40-120 words) = +15 points
     if (summary) {
@@ -530,7 +723,7 @@ function calculateATSScore() {
     }
     
     // Rule 2: At least 2 projects = +10 points
-    const validProjects = projects.filter(p => p.name || p.description).length;
+    const validProjects = projects.filter(p => p.title || p.description).length;
     if (validProjects >= 2) {
         score += 10;
     } else {
@@ -545,12 +738,11 @@ function calculateATSScore() {
         feedback.push('Add at least 1 work experience entry');
     }
     
-    // Rule 4: Skills ≥ 8 items = +10 points
-    const skillsArray = skills ? skills.split(',').map(s => s.trim()).filter(s => s) : [];
-    if (skillsArray.length >= 8) {
+    // Rule 4: Skills >= 8 items = +10 points
+    if (allSkills.length >= 8) {
         score += 10;
     } else {
-        feedback.push(`Add more skills (currently have ${skillsArray.length}, target 8+)`);
+        feedback.push(`Add more skills (currently have ${allSkills.length}, target 8+)`);
     }
     
     // Rule 5: GitHub OR LinkedIn exists = +10 points
@@ -714,30 +906,62 @@ function generateResumeHTML() {
     
     // Projects
     if (projects.length > 0) {
-        html += '<div class="resume-section">';
-        html += '<h2 class="resume-section-title">Projects</h2>';
-        projects.forEach(proj => {
-            if (proj.name || proj.description || proj.techStack) {
+        const validProjects = projects.filter(p => p.title || p.description || (p.techStack && p.techStack.length));
+        if (validProjects.length > 0) {
+            html += '<div class="resume-section">';
+            html += '<h2 class="resume-section-title">Projects</h2>';
+            validProjects.forEach(proj => {
                 html += '<div class="resume-entry">';
-                if (proj.name) html += `<div class="resume-entry-title">${escapeHtml(proj.name)}</div>`;
-                if (proj.description) html += `<p class="resume-entry-description">${escapeHtml(proj.description)}</p>`;
-                if (proj.techStack) html += `<div class="resume-entry-meta">Tech: ${escapeHtml(proj.techStack)}</div>`;
+                // Title + links row
+                html += '<div class="resume-entry-header">';
+                if (proj.title) html += `<span class="resume-entry-title">${escapeHtml(proj.title)}</span>`;
+                html += '<span class="resume-project-links">';
+                if (proj.liveUrl) html += `<a href="${escapeHtml(proj.liveUrl)}" target="_blank" class="resume-proj-link">&#127760; Live</a>`;
+                if (proj.githubUrl) html += `<a href="${escapeHtml(proj.githubUrl)}" target="_blank" class="resume-proj-link">&#128279; GitHub</a>`;
+                html += '</span>';
                 html += '</div>';
-            }
-        });
-        html += '</div>';
+                if (proj.description) html += `<p class="resume-entry-description">${escapeHtml(proj.description)}</p>`;
+                if (proj.techStack && proj.techStack.length) {
+                    html += '<div class="resume-skills" style="margin-top:0.4rem">';
+                    proj.techStack.forEach(t => {
+                        html += `<span class="skill-tag">${escapeHtml(t)}</span>`;
+                    });
+                    html += '</div>';
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+        }
     }
     
-    // Skills
-    if (skills) {
+    // Skills — grouped by category
+    const technical = skills.technical || [];
+    const soft = skills.soft || [];
+    const tools = skills.tools || [];
+    if (technical.length || soft.length || tools.length) {
         html += '<div class="resume-section">';
         html += '<h2 class="resume-section-title">Skills</h2>';
-        html += '<div class="resume-skills">';
-        const skillsArray = skills.split(',').map(s => s.trim()).filter(s => s);
-        skillsArray.forEach(skill => {
-            html += `<span class="skill-tag">${escapeHtml(skill)}</span>`;
-        });
-        html += '</div>';
+        if (technical.length) {
+            html += '<div class="resume-skill-group">';
+            html += '<div class="resume-skill-group-label">Technical</div>';
+            html += '<div class="resume-skills">';
+            technical.forEach(s => { html += `<span class="skill-tag">${escapeHtml(s)}</span>`; });
+            html += '</div></div>';
+        }
+        if (soft.length) {
+            html += '<div class="resume-skill-group">';
+            html += '<div class="resume-skill-group-label">Soft Skills</div>';
+            html += '<div class="resume-skills">';
+            soft.forEach(s => { html += `<span class="skill-tag">${escapeHtml(s)}</span>`; });
+            html += '</div></div>';
+        }
+        if (tools.length) {
+            html += '<div class="resume-skill-group">';
+            html += '<div class="resume-skill-group-label">Tools &amp; Technologies</div>';
+            html += '<div class="resume-skills">';
+            tools.forEach(s => { html += `<span class="skill-tag">${escapeHtml(s)}</span>`; });
+            html += '</div></div>';
+        }
         html += '</div>';
     }
     
@@ -930,7 +1154,7 @@ function generateTopImprovements() {
     // Priority order based on impact
     
     // Check projects (high impact)
-    const validProjects = projects.filter(p => p.name || p.description).length;
+    const validProjects = projects.filter(p => p.title || p.description).length;
     if (validProjects < 2) {
         improvements.push('Add at least one more project.');
     }
@@ -952,8 +1176,12 @@ function generateTopImprovements() {
     }
     
     // Check skills
-    const skillsArray = skills ? skills.split(',').map(s => s.trim()).filter(s => s) : [];
-    if (skillsArray.length < 8) {
+    const allSkillsFlat = [
+        ...(skills.technical || []),
+        ...(skills.soft || []),
+        ...(skills.tools || [])
+    ];
+    if (allSkillsFlat.length < 8) {
         improvements.push('Add more role-relevant skills.');
     }
     
@@ -1010,7 +1238,7 @@ function validateResumeBeforeExport(actionType) {
     
     // Check for no experience AND no projects
     const hasExperience = experience.some(e => e.company || e.role);
-    const hasProjects = projects.some(p => p.name || p.description);
+    const hasProjects = projects.some(p => p.title || p.description);
     
     if (!hasExperience && !hasProjects) {
         issues.push('Your resume has no experience or projects listed');
@@ -1155,23 +1383,33 @@ function generatePlainTextResume() {
     if (projects.length > 0) {
         text += 'PROJECTS\n';
         projects.forEach(proj => {
-            if (proj.name) {
-                text += proj.name + '\n';
+            if (proj.title) {
+                text += proj.title + '\n';
                 if (proj.description) {
-                    text += '  • ' + proj.description + '\n';
+                    text += '  \u2022 ' + proj.description + '\n';
                 }
-                if (proj.techStack) {
-                    text += '  Tech: ' + proj.techStack + '\n';
+                if (proj.techStack && proj.techStack.length) {
+                    text += '  Tech: ' + proj.techStack.join(', ') + '\n';
                 }
+                if (proj.liveUrl) text += '  Live: ' + proj.liveUrl + '\n';
+                if (proj.githubUrl) text += '  GitHub: ' + proj.githubUrl + '\n';
                 text += '\n';
             }
         });
     }
     
     // Skills
-    if (skills) {
+    const allSkillsText = [
+        ...(skills.technical || []),
+        ...(skills.soft || []),
+        ...(skills.tools || [])
+    ];
+    if (allSkillsText.length) {
         text += 'SKILLS\n';
-        text += skills + '\n\n';
+        if ((skills.technical || []).length) text += 'Technical: ' + skills.technical.join(', ') + '\n';
+        if ((skills.soft || []).length) text += 'Soft Skills: ' + skills.soft.join(', ') + '\n';
+        if ((skills.tools || []).length) text += 'Tools: ' + skills.tools.join(', ') + '\n';
+        text += '\n';
     }
     
     // Links
