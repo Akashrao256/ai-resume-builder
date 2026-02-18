@@ -84,7 +84,10 @@
                     <section class="form-section">
                         <h3>Professional Summary</h3>
                         <div class="form-field">
-                            <label for="summary">Summary</label>
+                            <div class="label-group">
+                                <label for="summary">Summary</label>
+                                <button type="button" id="btn-ai-summary" class="btn-ai-assist btn-sm">✨ AI Generate</button>
+                            </div>
                             <textarea id="summary" name="summary" rows="4" placeholder="Brief professional summary highlighting your key strengths and experience..."></textarea>
                         </div>
                     </section>
@@ -349,6 +352,7 @@
         </div>
     </template>
 
+    <script src="ai-client.js"></script>
     <script src="resume-app.js"></script>
 </body>
 </html>

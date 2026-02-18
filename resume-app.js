@@ -207,7 +207,7 @@ function renderBuilderPage() {
     appContent.appendChild(clone);
     
     // Setup form event listeners
-    setupBuilderListeners();
+    setupBuilderListeners(); setupAIListeners();
     
     // Setup template switcher
     setupTemplateSwitcher();
@@ -514,7 +514,7 @@ function renderExperienceList() {
                 <input type="text" class="exp-duration" data-index="${index}" value="${exp.duration || ''}" placeholder="Jan 2020 - Present">
             </div>
             <div class="form-field">
-                <label>Description</label>
+                <div class="label-group"><label>Description</label><button class="btn-ai-assist btn-sm" onclick="handleAIEnhance(this)">✨ Improve</button></div>
                 <textarea class="exp-description" data-index="${index}" rows="3" placeholder="Describe your responsibilities and achievements...">${exp.description || ''}</textarea>
             </div>
         `;
@@ -1907,3 +1907,158 @@ function init() {
 
 // Start the app
 document.addEventListener('DOMContentLoaded', init);
+
+// ===== AI ASSIST FEATURES =====
+async function handleAISummary() {
+    if (!window.aiClient) return;
+    const btn = document.getElementById('btn-ai-summary');
+    const txt = document.getElementById('summary');
+    
+    if (!btn || !txt) return;
+
+    const originalText = btn.innerHTML;
+    btn.innerHTML = 'Generating...';
+    btn.classList.add('loading');
+    btn.disabled = true;
+
+    try {
+        // Gather roles for context
+        const roles = (APP_STATE.resume.experience || []).map(e => e.role).filter(r => r).join(', ') || 'Professional';
+        const res = await window.aiClient.generateSummary(roles, txt.value);
+        if (res && res.data) {
+            txt.value = res.data;
+            APP_STATE.resume.summary = res.data;
+            saveState();
+            updatePreview();
+            showToast('Summary generated with AI!');
+        }
+    } catch (e) {
+        showToast('AI generation failed.');
+        console.error(e);
+    } finally {
+        btn.innerHTML = originalText;
+        btn.classList.remove('loading');
+        btn.disabled = false;
+    }
+}
+
+async function handleAIEnhance(btn) {
+    if (!window.aiClient) return;
+    
+    // Determine context
+    const expItem = btn.closest('.entry-item');
+    const projCard = btn.closest('.project-card');
+    
+    let type, index, textarea;
+    
+    if (expItem) {
+        type = 'experience';
+        // Find index from remove button to be safe, or data-index on inputs
+        const input = expItem.querySelector('.exp-company');
+        if(input) index = parseInt(input.dataset.index, 10);
+        textarea = expItem.querySelector('textarea');
+    } else if (projCard) {
+        type = 'project';
+        index = parseInt(projCard.dataset.index, 10);
+        textarea = projCard.querySelector('textarea');
+    } else {
+        return;
+    }
+
+    if (!textarea || typeof index === 'undefined') return;
+
+    const originalText = btn.innerHTML;
+    btn.innerHTML = 'Improving...';
+    btn.classList.add('loading');
+    btn.disabled = true;
+    
+    try {
+        let res;
+        const currentVal = textarea.value;
+        if (type === 'experience') {
+            res = await window.aiClient.improveBullet(currentVal || 'Led a team');
+        } else {
+            res = await window.aiClient.enhanceProjectDescription(currentVal || 'Built a web app');
+        }
+        
+        if (res && res.data) {
+            textarea.value = res.data;
+            // Update state
+            if (type === 'experience') {
+                if(APP_STATE.resume.experience[index]) APP_STATE.resume.experience[index].description = res.data;
+            } else {
+                if(APP_STATE.resume.projects[index]) APP_STATE.resume.projects[index].description = res.data;
+            }
+            saveState();
+            updatePreview();
+            showToast('Content improved with AI!');
+        }
+    } catch (e) {
+        showToast('AI enhancement failed.');
+        console.error(e);
+    } finally {
+        btn.innerHTML = originalText;
+        btn.classList.remove('loading');
+        btn.disabled = false;
+    }
+}
+
+function setupAIListeners() {
+    // Summary
+    const sumBtn = document.getElementById('btn-ai-summary');
+    if (sumBtn) {
+        const newBtn = sumBtn.cloneNode(true);
+        sumBtn.parentNode.replaceChild(newBtn, sumBtn);
+        newBtn.addEventListener('click', handleAISummary);
+    }
+
+    // Skill Suggestions (override existing behaviour)
+    const skillBtn = document.getElementById('suggest-skills-btn');
+    if (skillBtn) {
+        // Clone to remove existing listeners
+        const newBtn = skillBtn.cloneNode(true);
+        skillBtn.parentNode.replaceChild(newBtn, skillBtn);
+        
+        newBtn.addEventListener('click', async () => {
+            if (!window.aiClient) return;
+            
+            const originalText = newBtn.innerText;
+            newBtn.innerHTML = 'Analyzing...';
+            newBtn.classList.add('loading');
+            newBtn.disabled = true;
+            
+            try {
+                // Get role from first experience or default
+                const role = (APP_STATE.resume.experience[0] && APP_STATE.resume.experience[0].role) || 'Developer';
+                const res = await window.aiClient.suggestSkills(role);
+                
+                if (res && res.data) {
+                    const tech = APP_STATE.resume.skills.technical;
+                    let addedCount = 0;
+                    res.data.forEach(s => {
+                        if (!tech.includes(s)) {
+                            tech.push(s);
+                            addedCount++;
+                        }
+                    });
+                    
+                    if (addedCount > 0) {
+                        renderSkillChips('technical');
+                        saveState();
+                        updatePreview();
+                        showToast(`Added ${addedCount} suggested skills for ${role}!`);
+                    } else {
+                        showToast('No new skills found.');
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+                showToast('Skill suggestion failed.');
+            } finally {
+                newBtn.innerHTML = originalText;
+                newBtn.classList.remove('loading');
+                newBtn.disabled = false;
+            }
+        });
+    }
+}

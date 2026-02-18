@@ -1992,6 +1992,73 @@ label {
     display: none !important;
 }
 
+/* === AI Assist Styling === */
+.label-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-xs);
+}
+
+.btn-ai-assist {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+    border: none;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 5px rgba(99, 102, 241, 0.3);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-ai-assist:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(99, 102, 241, 0.4);
+    filter: brightness(1.1);
+}
+
+.btn-ai-assist:active {
+    transform: translateY(0);
+}
+
+.btn-ai-assist.loading {
+    opacity: 0.8;
+    cursor: wait;
+}
+
+.btn-ai-assist.loading::after {
+    content: "";
+    width: 10px;
+    height: 10px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-left: 4px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.ai-suggestion-modal {
+    background: white;
+    padding: var(--space-lg);
+    border-radius: var(--radius-md);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--color-border-medium);
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    margin-top: var(--space-sm);
+}
+
+
 @keyframes slideUp {
     from {
         opacity: 0;
