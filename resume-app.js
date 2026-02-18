@@ -1930,7 +1930,7 @@ async function handleAISummary() {
             APP_STATE.resume.summary = res.data;
             saveState();
             updatePreview();
-            showToast('Summary generated with AI!');
+            showToast(res.mock ? 'Summary generated (smart fallback — add API key for real AI).' : 'Summary generated with AI!');
         }
     } catch (e) {
         showToast('AI generation failed.');
@@ -1976,9 +1976,11 @@ async function handleAIEnhance(btn) {
         let res;
         const currentVal = textarea.value;
         if (type === 'experience') {
-            res = await window.aiClient.improveBullet(currentVal || 'Led a team');
+            const expRole = (APP_STATE.resume.experience[index] && APP_STATE.resume.experience[index].role) || '';
+            res = await window.aiClient.improveBullet(currentVal || 'Led a team', expRole);
         } else {
-            res = await window.aiClient.enhanceProjectDescription(currentVal || 'Built a web app');
+            const projTitle = (APP_STATE.resume.projects[index] && APP_STATE.resume.projects[index].title) || '';
+            res = await window.aiClient.enhanceProjectDescription(currentVal || 'Built a web app', projTitle);
         }
         
         if (res && res.data) {
@@ -1991,7 +1993,7 @@ async function handleAIEnhance(btn) {
             }
             saveState();
             updatePreview();
-            showToast('Content improved with AI!');
+            showToast(res.mock ? 'Content improved (smart fallback — add API key for real AI).' : 'Content improved with AI!');
         }
     } catch (e) {
         showToast('AI enhancement failed.');
@@ -2030,7 +2032,8 @@ function setupAIListeners() {
             try {
                 // Get role from first experience or default
                 const role = (APP_STATE.resume.experience[0] && APP_STATE.resume.experience[0].role) || 'Developer';
-                const res = await window.aiClient.suggestSkills(role);
+                const existingSkills = APP_STATE.resume.skills.technical || [];
+                const res = await window.aiClient.suggestSkills(role, existingSkills);
                 
                 if (res && res.data) {
                     const tech = APP_STATE.resume.skills.technical;
@@ -2046,7 +2049,7 @@ function setupAIListeners() {
                         renderSkillChips('technical');
                         saveState();
                         updatePreview();
-                        showToast(`Added ${addedCount} suggested skills for ${role}!`);
+                        showToast(res.mock ? `Added ${addedCount} skills (smart fallback — add API key for real AI).` : `Added ${addedCount} AI-suggested skills for ${role}!`);
                     } else {
                         showToast('No new skills found.');
                     }

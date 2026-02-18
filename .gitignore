@@ -1,0 +1,15 @@
+# Local development patches (auto-generated, not for commit)
+_patch_*.js
+
+# Local config (if user creates one)
+config.local.js
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor directories
+.vscode/
+.idea/
