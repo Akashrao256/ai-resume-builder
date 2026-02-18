@@ -984,7 +984,7 @@ function setupExportActions() {
     
     if (printBtn) {
         printBtn.addEventListener('click', () => {
-            if (validateResumeBeforeExport()) {
+            if (validateResumeBeforeExport('print')) {
                 handlePrintExport();
             }
         });
@@ -992,14 +992,14 @@ function setupExportActions() {
     
     if (copyBtn) {
         copyBtn.addEventListener('click', () => {
-            if (validateResumeBeforeExport()) {
+            if (validateResumeBeforeExport('copy')) {
                 handleCopyAsText();
             }
         });
     }
 }
 
-function validateResumeBeforeExport() {
+function validateResumeBeforeExport(actionType) {
     const { personalInfo, experience, projects } = APP_STATE.resume;
     const issues = [];
     
@@ -1017,14 +1017,14 @@ function validateResumeBeforeExport() {
     }
     
     if (issues.length > 0) {
-        showValidationModal(issues);
+        showValidationModal(issues, actionType);
         return false; // Block until user confirms
     }
     
     return true; // No issues, proceed
 }
 
-function showValidationModal(issues) {
+function showValidationModal(issues, actionType) {
     const modal = document.getElementById('validation-modal');
     const message = document.getElementById('validation-message');
     const cancelBtn = document.getElementById('validation-cancel-btn');
@@ -1034,6 +1034,9 @@ function showValidationModal(issues) {
     
     // Set message
     message.textContent = issues.join('. ') + '.';
+    
+    // Store action type
+    modal.dataset.action = actionType;
     
     // Show modal
     modal.classList.remove('hidden');
@@ -1053,9 +1056,6 @@ function showValidationModal(issues) {
             copyResumeToClipboard();
         }
     };
-    
-    // Store action for later
-    modal.dataset.action = event.target.id.includes('print') ? 'print' : 'copy';
 }
 
 function handlePrintExport() {
