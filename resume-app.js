@@ -22,7 +22,13 @@ const APP_STATE = {
         }
     },
     template: 'classic',   // classic | modern | minimal
-    accentColor: 'hsl(168, 60%, 40%)' // default: teal
+    accentColor: 'hsl(168, 60%, 40%)', // default: teal
+    submission: {
+        lovableLink: '',
+        githubLink: '',
+        deployedUrl: '',
+        qaPassed: []
+    }
 };
 
 // Accent color palette — scalable for future additions
@@ -131,6 +137,7 @@ function loadState() {
             }
             if (loaded.template) APP_STATE.template = loaded.template;
             if (loaded.accentColor) APP_STATE.accentColor = loaded.accentColor;
+            if (loaded.submission) APP_STATE.submission = loaded.submission;
         } catch (e) {
             console.error('Failed to load state:', e);
         }
@@ -1081,9 +1088,202 @@ function renderPreviewPage() {
 function renderProofPage() {
     const template = document.getElementById('proof-template');
     const clone = template.content.cloneNode(true);
-    
+
     const appContent = document.getElementById('app-content');
     appContent.appendChild(clone);
+
+    renderBuildSteps();
+    renderQAChecklist();
+    bindSubmissionInputs();
+    
+    const copyBtn = document.getElementById('copy-submission-btn');
+    if (copyBtn) copyBtn.addEventListener('click', handleFinalSubmission);
+    
+    checkShippedStatus();
+}
+
+function renderBuildSteps() {
+    const steps = [
+        { id: '01', name: 'Problem Statement' },
+        { id: '02', name: 'Market Analysis' },
+        { id: '03', name: 'Architecture' },
+        { id: '04', name: 'HLD Design' },
+        { id: '05', name: 'LLD Design' },
+        { id: '06', name: 'Build Implementation' },
+        { id: '07', name: 'Testing & QA' },
+        { id: '08', name: 'Ship & Release' }
+    ];
+
+    const list = document.getElementById('build-step-list');
+    if (!list) return;
+
+    let html = '';
+    steps.forEach(step => {
+        const key = `rb_step_${step.id}_artifact`;
+        const isComplete = localStorage.getItem(key) !== null;
+        
+        const statusClass = isComplete ? 'status-completed' : 'status-pending';
+        const label = isComplete ? 'Completed' : 'Pending';
+        
+        html += `<div class="step-item">
+            <span class="step-name">/rb/${step.id}-${step.name}</span>
+            <span class="status-badge ${statusClass}">${label}</span>
+        </div>`;
+    });
+    list.innerHTML = html;
+}
+
+function renderQAChecklist() {
+    const checklist = [
+        { id: 'qa-persistence', label: 'Persistence (localStorage)' },
+        { id: 'qa-preview', label: 'Live Preview Rendering' },
+        { id: 'qa-templates', label: 'Template Switching' },
+        { id: 'qa-themes', label: 'Color Themes' },
+        { id: 'qa-ats', label: 'ATS Scoring Engine verified' },
+        { id: 'qa-suggestions', label: 'Improvement Suggestions verified' },
+        { id: 'qa-export', label: 'Export System (PDF/Text) verified' },
+        { id: 'qa-validation', label: 'Form Validation verified' },
+        { id: 'qa-responsiveness', label: 'Responsiveness verified' },
+        { id: 'qa-console', label: 'System Health (No Errors)' }
+    ];
+
+    const container = document.getElementById('qa-checklist');
+    if (!container) return;
+    
+    const passed = APP_STATE.submission.qaPassed || [];
+    let html = '';
+
+    checklist.forEach(item => {
+        const isChecked = passed.includes(item.id) ? 'checked' : '';
+        html += `<div class="qa-item">
+            <input type="checkbox" id="${item.id}" ${isChecked} data-qa-id="${item.id}">
+            <label for="${item.id}" class="qa-label">${item.label}</label>
+        </div>`;
+    });
+    container.innerHTML = html;
+
+    container.querySelectorAll('input[type="checkbox"]').forEach(box => {
+        box.addEventListener('change', (e) => {
+            const id = e.target.dataset.qaId;
+            if (e.target.checked) {
+                if (!APP_STATE.submission.qaPassed.includes(id)) APP_STATE.submission.qaPassed.push(id);
+            } else {
+                APP_STATE.submission.qaPassed = APP_STATE.submission.qaPassed.filter(i => i !== id);
+            }
+            saveState();
+            checkShippedStatus();
+        });
+    });
+}
+
+function bindSubmissionInputs() {
+    const inputs = ['lovableLink', 'githubLink', 'deployedUrl'];
+    inputs.forEach(key => {
+        const id = key.replace(/([A-Z])/g, '-$1').toLowerCase(); 
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.value = APP_STATE.submission[key] || '';
+        el.addEventListener('input', (e) => {
+            APP_STATE.submission[key] = e.target.value;
+            validateUrlInput(e.target);
+            saveState();
+            checkShippedStatus();
+        });
+    });
+}
+
+function validateUrlInput(input) {
+    let errorId = '';
+    if (input.id === 'lovable-link') errorId = 'error-lovable';
+    else if (input.id === 'github-link') errorId = 'error-github';
+    else if (input.id === 'deployed-url') errorId = 'error-deployed';
+    
+    const errorEl = document.getElementById(errorId);
+    if (!errorEl) return false;
+
+    if (!input.value.trim()) {
+        errorEl.textContent = 'This field is required.';
+        return false;
+    }
+    try {
+        new URL(input.value);
+        errorEl.textContent = '';
+        return true;
+    } catch (_) {
+        errorEl.textContent = 'Enter a valid URL (include https://).';
+        return false;
+    }
+}
+
+function handleFinalSubmission() {
+    const inputs = ['lovable-link', 'github-link', 'deployed-url'];
+    let allValid = true;
+    inputs.forEach(id => {
+        if (!validateUrlInput(document.getElementById(id))) allValid = false;
+    });
+
+    if (!allValid) {
+        showToast('Please fix validation errors.');
+        return;
+    }
+
+    const { lovableLink, githubLink, deployedUrl } = APP_STATE.submission;
+    const text = `AI Resume Builder — Final Submission
+
+Lovable Project: ${lovableLink}
+GitHub Repository: ${githubLink}
+Live Deployment: ${deployedUrl}
+
+Core Capabilities:
+* Structured resume builder
+* Deterministic ATS scoring
+* Template switching
+* PDF export with clean formatting
+* Validation checklist passed`;
+
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('copy-submission-btn');
+        if(btn) {
+            const original = btn.textContent;
+            btn.textContent = 'Copied!';
+            btn.style.backgroundColor = '#137333';
+            setTimeout(() => {
+                btn.textContent = original;
+                btn.style.backgroundColor = '';
+            }, 2000);
+        }
+        showToast('Submission copied to clipboard!');
+    });
+}
+
+function checkShippedStatus() {
+    const msg = document.getElementById('ship-success-msg');
+    if (!msg) return;
+
+    // 1. Steps
+    const steps = ['01','02','03','04','05','06','07','08'];
+    const allSteps = steps.every(id => localStorage.getItem(`rb_step_${id}_artifact`) !== null);
+
+    // 2. QA (10 items)
+    const allQA = APP_STATE.submission.qaPassed && APP_STATE.submission.qaPassed.length >= 10;
+
+    // 3. Links
+    const { lovableLink, githubLink, deployedUrl } = APP_STATE.submission;
+    let linksValid = false;
+    try {
+        if (lovableLink && githubLink && deployedUrl) {
+            new URL(lovableLink); 
+            new URL(githubLink); 
+            new URL(deployedUrl);
+            linksValid = true;
+        }
+    } catch (e) { linksValid = false; }
+
+    if (allSteps && allQA && linksValid) {
+        msg.classList.remove('hidden');
+    } else {
+        msg.classList.add('hidden');
+    }
 }
 
 // ===== TEMPLATE SYSTEM =====

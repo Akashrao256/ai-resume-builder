@@ -289,27 +289,62 @@
     <template id="proof-template">
         <div class="proof-page">
             <div class="proof-container">
-                <h2>Proof & Submission</h2>
-                <p class="proof-description">Submit your resume builder artifacts and completion proof.</p>
+                <div class="proof-header">
+                    <h2>Proof & Submission</h2>
+                    <p class="proof-description">Verify your build progress and submit your final artifacts.</p>
+                </div>
 
+                <!-- 1. Step Completion Overview -->
                 <section class="proof-section">
-                    <div class="form-field">
-                        <label for="export-link">Resume Export Link (Future)</label>
-                        <input type="url" id="export-link" placeholder="https://..." disabled>
+                    <h3>1. Build Track Progress</h3>
+                    <div class="step-list" id="build-step-list">
+                        <!-- Populated by JS -->
                     </div>
-
-                    <div class="form-field">
-                        <label for="completion-proof">Builder Completion Proof</label>
-                        <input type="text" id="completion-proof" placeholder="Project completion evidence...">
-                    </div>
-
-                    <div class="form-field">
-                        <label for="proof-notes">Notes</label>
-                        <textarea id="proof-notes" rows="6" placeholder="Additional notes or comments..."></textarea>
-                    </div>
-
-                    <button class="btn-primary" disabled>Submit (Not Implemented)</button>
                 </section>
+
+                <!-- 2. QA Checklist (Self-Verification) -->
+                <section class="proof-section">
+                    <h3>2. Feature Audit & QA</h3>
+                    <div class="qa-checklist" id="qa-checklist">
+                        <!-- Populated by JS -->
+                    </div>
+                </section>
+
+                <!-- 3. Artifact Collection -->
+                <section class="proof-section">
+                    <h3>3. Final Submission</h3>
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label for="lovable-link">Lovable Project Link <span class="required">*</span></label>
+                            <input type="url" id="lovable-link" placeholder="https://lovable.dev/..." required>
+                            <span class="error-msg" id="error-lovable"></span>
+                        </div>
+                        <div class="form-field">
+                            <label for="github-link">GitHub Repository Link <span class="required">*</span></label>
+                            <input type="url" id="github-link" placeholder="https://github.com/..." required>
+                            <span class="error-msg" id="error-github"></span>
+                        </div>
+                        <div class="form-field">
+                            <label for="deployed-url">Live Deployment URL <span class="required">*</span></label>
+                            <input type="url" id="deployed-url" placeholder="https://..." required>
+                            <span class="error-msg" id="error-deployed"></span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. Action Area -->
+                <div class="proof-actions">
+                    <button class="btn-primary" id="copy-submission-btn">Copy Final Submission</button>
+                </div>
+
+                <!-- 5. Success Confirmation -->
+                <div class="success-message hidden" id="ship-success-msg">
+                    <div class="success-icon">✓</div>
+                    <div class="success-content">
+                        <h4>Project 3 Shipped Successfully</h4>
+                        <p>Your AI Resume Builder is complete and ready for review.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </template>
